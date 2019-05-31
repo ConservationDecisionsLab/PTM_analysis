@@ -17,9 +17,9 @@ library(RColorBrewer)
 
 # Read in data
 results <- read.csv("Results.csv")
-head(results)
+# head(results)
 
-# AC: need to standardize labels
+# AC: need to standardize labels - should probably do it in combineTables.R instead
 results$Ecological.Group <- as.character(results$Ecological.Group)
 results$Ecological.Group[which(results$Ecological.Group=="Mature Forest Species")] <- "Mature Forest and Peatland"
 results$Ecological.Group[which(results$Ecological.Group=="Mature Forest/ Peatland Species")] <- "Mature Forest and Peatland"
@@ -64,7 +64,7 @@ rlong$Est.Type[grep("Confidence", rlong$Estimate)] <- "Confidence"
 
 # PREP FOR STANDARDIZATION
 # Subset the dataset include desired strategies (and remove strategies 11-13, the development strategies)
-# Commented out as we are looking at all strategies
+# AC: Commented out as we are looking at all strategies
 # rlong <-
 #   subset(
 #     rlong,
@@ -112,7 +112,7 @@ str(rlong) # check if it worked
 # ** I have checked these against hand calculations in excel and this method worked perfectly
 
 # order dataframe by expert then est.type
-rlong[with(rlong, order(Est.Type, Expert, Strategy)),] # AC: I don't think this is doing anything, as it is still ordered by Strategy first, then Estimate, then expert
+# rlong[with(rlong, order(Est.Type, Expert, Strategy)),] # AC: I don't think this is doing anything, as it is still ordered by Strategy first, then Estimate, then expert
 
 # subset dataframe by estimate type 
 bg <- subset(rlong, Est.Type == "Best.Guess")
@@ -167,43 +167,14 @@ rlong.sub <- rlong.std[,c(1,2,3,7)] # subsets only relevant columns
 # Save standardized estimates into a new table, with same format as results
 est.levels <- unique(rlong$Estimate)
 rlong.wide <- spread(rlong.sub, Estimate, St.Value)
-rlong.wide <- rlong.wide[, c("Expert", "Ecological.Group", est.levels)] # AC: Reorders columns -- Does the same as below, but more generalizable (and less typing)
-# rlong.wide<-rlong.wide[,c("Expert", "Ecological.Group", "B.Best.Guess",	"B.Lower",	"B.Upper", "B.Confidence", # Re-order the columns int he dataset so they reflect the order that we have in excel 
-#                                                           "S1.Best.Guess",	"S1.Lower",	"S1.Upper","S1.Confidence",
-#                                                           "S2.Best.Guess",  "S2.Lower",	"S2.Upper","S2.Confidence",
-#                                                           "S3.Best.Guess",	"S3.Lower",	"S3.Upper","S3.Confidence",
-#                                                           "S4.Best.Guess",	"S4.Lower",	"S4.Upper", "S4.Confidence",
-#                                                           "S5.Best.Guess",	"S5.Lower",	"S5.Upper", "S5.Confidence",
-#                                                           "S6.Best.Guess",	"S6.Lower",	"S6.Upper", "S6.Confidence",
-#                                                           "S7.Best.Guess",	"S7.Lower",	"S7.Upper", "S7.Confidence",
-#                                                           "S8.Best.Guess",	"S8.Lower",	"S8.Upper", "S8.Confidence",
-#                                                           "S9.Best.Guess",	"S9.Lower",	"S9.Upper", "S9.Confidence",
-#                                                           "S10.Best.Guess",	"S10.Lower",	"S10.Upper", "S10.Confidence",
-#                                                           "S14.Best.Guess",	"S14.Lower",	"S14.Upper", "S14.Confidence",
-#                                                           "S15.Best.Guess",	"S15.Lower",	"S15.Upper", "S15.Confidence",
-#                                                           "S16.Best.Guess",	"S16.Lower",	"S16.Upper", "S16.Confidence",
-#                                                           "S17.Best.Guess",	"S17.Lower",	"S17.Upper", "S17.Confidence")]
+rlong.wide <- rlong.wide[, c("Expert", "Ecological.Group", est.levels)] # AC: Reorders columns -- Does the same as before (in FRE code), but more generalizable (and less typing)
 
 grp.levels <- unique(rlong.std$Ecological.Group)
-rlong.wide$Ecological.Group<-factor(rlong.wide$Ecological.Group, levels=grp.levels) # AC: does the same as below
-# rlong.wide$Ecological.Group<-factor(rlong.wide$Ecological.Group, levels=c("Pelagic Seabirds",
-#                                                          "Diurnal & Nocturnal Raptors",
-#                                                          "Songbirds, Migrants",
-#                                                          "Fish, Anadromous",
-#                                                          "Aerial Insectivore, Mammal",
-#                                                          "Marine Mammal",
-#                                                          "Coastal Sand Ecosystems",
-#                                                          "Grassland-threatened Species, Migrants",
-#                                                          "Forest Specialists",
-#                                                          "Riparian: Freshwater (marsh, creek, mudflat, lake)",
-#                                                          "Riparian: Saltwater (Mudflat/seagrass/saltmarsh)",
-#                                                          "Wetland-threatened Species, Residents", 
-#                                                          "Wetland-threatened Species, Migrants"))
+rlong.wide$Ecological.Group<-factor(rlong.wide$Ecological.Group, levels=grp.levels) # AC: does the same as before
 
+## Table that produces how many experts estimated for which species group
 rlong.wide<-with(rlong.wide, rlong.wide[order(Expert, Ecological.Group),]) # AC: Added to arrange rows in same order as results table
 write_csv(rlong.wide, "Standardized_Estimates_Wide.csv") # export to .csv
-## Table that produces how many experts estimated for which species group
-
 
 
 ## PLOTTING CODE: ##############################################################################################
@@ -216,7 +187,7 @@ rlong.std$Strategy <- factor(rlong.std$Strategy,levels = strat.levels)
 # Subset to remove confidence estimates
 rlong.std <- subset(rlong.std, Est.Type %in% c("Best.Guess", "Lower", "Upper"))
 
-# renaming Grassland/Open Habitat Species as it doesn't work as a filename as is
+# renaming Grassland/Open Habitat Species as it doesn't work as a filename as is (Should do this in combineTables.R instead)
 grp.names <- grp.levels
 grp.names[which(grp.levels=="Grassland/Open Habitat species")] <- paste0("Grassland Species")
 
@@ -262,7 +233,46 @@ for (i in seq_along(grp.levels)) {
   ggsave(plot1, file=paste0(grp.names[i], ".pdf", sep=''), width = 10, height = 8, units = "in")
 }
 
-# ## OLD PLOTTING CODE
+## PLOT each expert estimate separately (x-axis = Expert, y-axis point = Best guess, range = lower->upper)
+rlong.sub2 <- rlong.std[,c(1,2,5,6,7)]
+rlong.std.wide <- spread(rlong.sub2,key=Est.Type,value=St.Value)
+rlong.std.wide$Expert<-as.factor(rlong.std.wide$Expert)
+
+for (i in seq_along(grp.levels)) {
+  temp.expdata <- subset(rlong.std.wide, Ecological.Group == grp.levels[i])
+  plot2 <-
+    ggplot(temp.expdata, aes(x = Expert, y = Best.Guess, color = Expert)) + # using the data Ecological group, graph Estimate Type on x-axis and St.Value on y-axis, and colour the boxplots by estimate type
+    geom_pointrange(aes(ymin = Lower, ymax = Upper))+
+    theme_cowplot() +  # use the theme "cowplot" for the plots, which is a nice minimalist theme
+    theme(
+      plot.margin = unit(c(0, 1, 0, 0.75), "cm"), # adjust margins around the outside of the plot (bottom=0,left=1,top=0,right=0.5)
+      panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
+      # panel.background = element_rect(fill='gray'),
+      axis.title.y = element_text(margin = margin(
+        t = 0,
+        r = 10,
+        b = 0,
+        l = 0
+      )),
+      axis.text.x = element_blank(),
+      legend.justification=c(1,0), legend.position=c(0.98,-0.05)
+    ) + # adjust space between y-axis numbers and y-axis label, removes x-axis tick labels, repositions legend box
+    # scale_color_brewer(palette='Paired') + # changes color palette
+    facet_wrap( ~ Strategy, nrow = 3) +  # tell R to create a separate panel of estimates for each management strategy
+    labs(x = "Experts", y = "Probability of persistence (%)", title = paste(grp.levels[i])) +  # put a horizontal label for the species group on the y axis
+    ylim(0, 100) # set the y-axis limits from 0-100
+  
+  # plot1 # print the plot onscreen
+  
+  # AC: save plots as .pdf, one file per ecological group
+  ggsave(plot2, file=paste0(grp.names[i],"_byExp.pdf", sep=''), width = 10, height = 8, units = "in")
+}
+
+### END ###
+
+### old FRE PTM code for generating plots manually:
+# AC: Commented out as I've looped it instead (above)
+
 # # Subset by species group
 # pel.sea <- subset(rlong, Ecological.Group == "Pelagic Seabirds")
 # raptors <-
