@@ -1,44 +1,52 @@
-## This code combines individual expert benefits table into a single table for plotting and analysis ##
+#' ---
+#' title: "Compile Expert Estimates"
+#' author: "Adapted for the SJR PTM by Abbey Camaclang"
+#' date: "3 July 2019"
+#' output: github_document
+#' ---
 
-# Requires that each expert table is saved as a .csv file in a subfolder within the working directory, 
-# contain the same number of rows and columns, and no other .csv files are in the same folder.
-# Written by Abbey Camaclang (version date: 28 May 2019)
+#' This script reads individual expert estimates from multiple .csv files
+#' and compiles them into a single Results.csv file.
+#' It requires that each expert table is saved as a .csv file in a subfolder within the working directory, 
+#' contain the same number of rows and columns, and no other .csv files are in the same folder.
 
 library(stringi)
 library(tidyverse)
 library(naniar)
 
+#' Read in the individual tables and combine
+#+ message = FALSE
+#+ warning = FALSE
 files <- list.files(path = "./expert_est/", # Name of the subfolder in working directory
            pattern = "*.csv", 
            full.names = T)
-
 temp <- read_csv(files[1], skip = 8) # Skips first few lines containing worksheet instructions
-temp <- temp[1:9,1:116] # Keeps only the relevant rows and columns (e.g. excludes the columns used to check data quality)
-temp <- select(temp,-contains("Quality"))
-temp <- add_column(temp,Expert=rep(1,9),.before="Ecological Group")
+temp <- temp[1:9,1:116] %>% # Keeps only the relevant rows and columns (e.g. excludes the columns used to check data quality)
+  select(.,-contains("Quality")) %>%
+  add_column(.,Expert=rep(1,9),.before="Ecological Group")
 byexpert <- temp
 
-for (i in 3:length(files)){
+for (i in 3:length(files)){ # 3 because I am skipping expert #2. Change this to 2 if want to read that file
   temp <- read_csv(files[i], skip = 8)
-  temp <- temp[1:9,1:116]
-  temp <- select(temp,-contains("Quality"))
-  temp <- add_column(temp,Expert=rep(i,9),.before="Ecological Group")
+  temp <- temp[1:9,1:116] %>%
+    select(.,-contains("Quality")) %>%
+    add_column(.,Expert=rep(i,9),.before="Ecological Group")
   byexpert<-rbind(byexpert,temp)
   }
 
-# Recode "x" to NA
+#' Recode "X" to NA
 na_strings <- c("X", "X ", "x", "x ")
-byexpert <- byexpert %>% replace_with_na_all(condition=~.x %in% na_strings)
+byexpert <- byexpert %>% 
+  replace_with_na_all(condition=~.x %in% na_strings)
 
-# Recode "B" to baseline values
-
-# get the baseline values
+#' Recode "B" to baseline values
+# Get the baseline values
 bestguess_base <- byexpert[,grep("Best guess$", colnames(byexpert))]
 lower_base <- byexpert[,grep("Lower$", colnames(byexpert))]
 upper_base <- byexpert[,grep("Upper$", colnames(byexpert))]
 conf_base <- byexpert[,grep("Confidence$", colnames(byexpert))]
 
-# find column indices
+# Find strategy column indices
 bestguess <- grep("Best guess_",colnames(byexpert))
 lowest <- grep("Lower_", colnames(byexpert))
 highest <- grep("Upper_", colnames(byexpert))
@@ -58,6 +66,13 @@ for (i in 1:length(bestguess)) {
   byexpert[l_temp,conf[i]] <- conf_base[l_temp,] # using the index for lower as some may have been left blank/NA
 }
 
+#' Standardize group labels if needed
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest Species")==1)] <- "Mature Forest and Peatland"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/ Peatland Species")==1)] <- "Mature Forest and Peatland"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/Peatland Species")==1)] <- "Mature Forest and Peatland"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grassland/Open Habitat species")==1)] <- "Grassland or Open Habitats"
+
+#' Output results
 write_csv(byexpert, "Results.csv")
 
 
