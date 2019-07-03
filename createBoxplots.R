@@ -23,9 +23,6 @@ library(gridExtra)
 library(sjPlot)
 # library(RColorBrewer)
 
-
-#' ## Create plots
-
 #' Read in data from benefits aggregation
 rlong.std <- read_csv("Standardized_Estimates_Long.csv") # use read_csv to make sure factors read in as character
 

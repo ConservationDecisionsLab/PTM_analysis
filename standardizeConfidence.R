@@ -15,8 +15,8 @@
 #'
 #' It requires output from combineTables.R, which organizes the estimates into a
 #' single table and saves it as 'Results.csv' in the current working directory.
-
-# Load packages
+#'
+#' Load packages
 #+ message = FALSE
 #+ warning = FALSE
 library(tidyverse)

@@ -53,7 +53,7 @@ library(gridExtra)
 library(sjPlot)
 ```
 
-    ## Install package "strengejacke" from GitHub (`devtools::install_github("strengejacke/strengejacke")`) to load all sj-packages at once!
+    ## Learn more about sjPlot with 'browseVignettes("sjPlot")'.
 
     ## 
     ## Attaching package: 'sjPlot'
@@ -65,9 +65,6 @@ library(sjPlot)
 ``` r
 # library(RColorBrewer)
 ```
-
-Create plots
-------------
 
 Read in data from benefits aggregation
 

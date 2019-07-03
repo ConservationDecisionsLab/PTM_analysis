@@ -7,9 +7,7 @@ This script standardizes the benefit estimates and saves results tables as .csv 
 
 It requires output from combineTables.R, which organizes the estimates into a single table and saves it as 'Results.csv' in the current working directory.
 
-``` r
-# Load packages
-```
+Load packages
 
 ``` r
 library(tidyverse)
