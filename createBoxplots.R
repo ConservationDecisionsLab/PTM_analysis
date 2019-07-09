@@ -75,7 +75,7 @@ for (i in seq_along(grp.levels)) {
    plot1 # print the plot onscreen
 
   # Save plots as .pdf, one file per ecological group
-  #ggsave(plot1, file=paste0(grp.levels[i], ".pdf", sep=''), width = 10, height = 8, units = "in")
+  ggsave(plot1, file=paste0(grp.levels[i], ".pdf", sep=''), path = "./boxplots/", width = 10, height = 8, units = "in")
 }
 
 #' Plot each expert estimate separately (x-axis = Expert, y-axis point = Best guess, range = lower->upper)
@@ -110,5 +110,5 @@ for (i in seq_along(grp.levels)) {
    plot2 # print the plot onscreen
 
   # Save plots as .pdf, one file per ecological group
-  #ggsave(plot2, file=paste0(grp.levels[i],"_byExp.pdf", sep=''), width = 10, height = 8, units = "in")
+  ggsave(plot2, file=paste0(grp.levels[i],"_byExp.pdf", sep=''), path = "./pointrange/", width = 10, height = 8, units = "in")
 }
