@@ -22,7 +22,7 @@ rlong.wide$Ecological.Group <- as_factor(rlong.wide$Ecological.Group)
 
 #' Remove confidence estimates from the table
 wide.colnames <- colnames(rlong.wide)
-idx.colnames <- which(str_detect(wide.colnames, "Confidence")==1)
+idx.colnames <- which(str_detect(wide.colnames, "Confidence") == 1)
 DF <- rlong.wide[,-(idx.colnames)]
 
 #' Calculate benefit: subtract baseline performance from strategy performance for each expert
@@ -51,3 +51,4 @@ exp.pop <- cbind(base.mat.agg, exp.pop)
 
 #' Output results
 write_csv(exp.pop, "Aggregated_Performance.csv")
+
