@@ -16,6 +16,7 @@
 #' Load packages
 #+ message = FALSE
 #+ warning = FALSE
+#+ results = 'hide'
 library(tidyverse)
 library(ggplot2)
 library(cowplot)
@@ -29,16 +30,19 @@ rlong.std <- read_csv("Standardized_Estimates_Long.csv") # use read_csv to make 
 #' Prepare data for plotting 
 strat.levels <- unique(rlong.std$Strategy)
 grp.levels <- unique(rlong.std$Ecological.Group)
-expcode <- unique(rlong.std$Expert)
+est.levels <- c("Lower", "Best.Guess", "Upper")
+expcode <- unique(rlong.std$Expert) 
 
 # Order the strategies to plot in the desired order
-rlong.std$Strategy <- factor(rlong.std$Strategy,levels = strat.levels)
+rlong.std$Strategy <- factor(rlong.std$Strategy, levels = strat.levels)
 
 # Subset to remove confidence estimates
-rlong.std <- subset(rlong.std, Est.Type %in% c("Best.Guess", "Lower", "Upper")) 
+rlong.std <- subset(rlong.std, Est.Type %in% c("Best.Guess", "Lower", "Upper"))
+rlong.std$Est.Type <- factor(rlong.std$Est.Type, levels = est.levels)
+
 
 #' Plot group estimates as boxplots and save as .pdf
-for (j in expcode) {
+for (j in seq_along(expcode)) {
   
   grp.list <- list()
   
@@ -56,7 +60,7 @@ for (j in expcode) {
                  color = 'blue'
                  ) +
       theme_cowplot() +  # use the theme "cowplot" for the plots, which is a nice minimalist theme
-      theme(plot.margin = unit(c(0, 1, 0, 0.75), "cm"), # adjust margins around the outside of the plot (bottom=0,left=1,top=0,right=0.5)
+      theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # adjust margins around the outside of the plot (top, right, bottom, left)
             panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
             axis.title.y = element_text(margin = margin(t = 0, 
                                                         r = 10,
@@ -66,10 +70,10 @@ for (j in expcode) {
             ) + 
       facet_wrap( ~ Strategy, nrow = 3) +  # create a separate panel of estimates for each management strategy
       scale_x_discrete(name = "",
-                       breaks = c("Best.Guess", "Lower", "Upper"),
-                       labels = c("B", "L", "H") # Give the x-axis variables shortened labels
+                       breaks = c("Lower", "Best.Guess", "Upper"),
+                       labels = c("L", "B", "U") # Give the x-axis variables shortened labels
                        ) + 
-      scale_fill_manual(values = c("gray80", "white", "white"), # Assign colours to each type of estimate and don't show a legend
+      scale_fill_manual(values = c("white", "gray80", "white"), # Assign colours to each type of estimate and don't show a legend
                         guide = FALSE 
                         ) + 
       labs(x = "", 
@@ -86,7 +90,7 @@ for (j in expcode) {
   ggsave(filename = paste0("Exp", expcode[j], ".pdf", sep=''), 
          plot1, 
          path = "./boxplots/", 
-         width = 10, height = 8, units = "in")
+         width = 11, height = 8.5, units = "in")
   
 }
 
@@ -104,7 +108,7 @@ for (j in seq_along(expcode)) {
   for (i in seq_along(grp.levels)) {
   
     temp.expdata <- subset(rlong.std.wide, Ecological.Group == grp.levels[i]) %>%
-      mutate(expi = ifelse(Expert == expcode[j], T, F))
+      mutate(expi = ifelse(Expert == expcode[j], T, F)) # this column allows for highlighting individual expert estimates
     temp.plot2 <-
       ggplot(temp.expdata, aes(x = Expert, # using the data Ecological group, plot Experts on X-axis
                                y = Best.Guess, # and corresponding standardized estimates on y-axis
@@ -114,7 +118,7 @@ for (j in seq_along(expcode)) {
              ) +  
       geom_pointrange(aes(ymin = Lower, ymax = Upper)) +
       theme_cowplot() +  # use the theme "cowplot" for the plots, which is a nice minimalist theme
-      theme(plot.margin = unit(c(0, 1, 0, 0.75), "cm"), # adjust margins around the outside of the plot (bottom=0,left=1,top=0,right=0.5)
+      theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # adjust margins around the outside of the plot
             panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
             axis.title.y = element_text(margin = margin(t = 0,
                                                         r = 10,
@@ -145,7 +149,7 @@ for (j in seq_along(expcode)) {
     filename = paste0("Indiv_Exp", expcode[j], ".pdf", sep=''), # if higlighting individual expert estimates
     plot2, 
     path = "./pointrange/", 
-    width = 10, height = 8, units = "in"
+    width = 11, height = 8.5, units = "in"
     )
   
 }
