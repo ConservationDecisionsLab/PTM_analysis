@@ -27,6 +27,10 @@ Collection of R scripts for standardizing and aggregating expert estimates and c
   + calculate the expected performance of each strategy for each ecological group = _Aggregated_Benefits_weighted + Aggregated_Baseline_ (Aggregated_Performance_weighted.csv)
   + create a Benefit matrix for use in the optimization using 'best guess' estimates from the Aggregated_Performance_weighted table (Benefits.csv)
 
+### plotMeanPerformance.R
+* can use Aggregated_Performance.csv or Aggregated_Performance_weighted.csv to 
+  + create pointrange plots of (unweighted or weighted) standardized mean estimates of probability of persistence (y-axis) for each strategy (x-axis) and for each ecological group (subplots)
+
 ### calculateCEscore.R
 * uses Aggregated_Benefits.csv and a table of strategy Cost and Feasibility to calculate a cost-effectiveness (CE) score  
 _CE = (Benefit*Feasibility)/Cost_ and rank strategies by Benefit, Cost, and CE. Results are saved as Cost_Effectiveness.csv
