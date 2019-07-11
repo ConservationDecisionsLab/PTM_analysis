@@ -1,30 +1,27 @@
 #' ---
 #' title: "Plot Standardized Benefit Estimates"
 #' author: "Adapted for the SJR PTM by Abbey Camaclang"
-#' date: "28 June 2019"
+#' date: "10 Jul 2019"
 #' output: github_document
 #' ---
 
-#' Based on 'Boxplot_script.R' from FRE PTM project [Found in Dropbox folder "\Fraser_River_Resilience\09_Plot_scripts\Final data scripts"]
+#' Based on *Boxplot_script.R* from FRE PTM project [Found in Dropbox folder "\Fraser_River_Resilience\09_Plot_scripts\Final data scripts"]
 #' This script creates two plots for each Ecological Group:  
 #' 1) boxplots of the best guess, lower, and upper estimates for each Strategy from all Experts;  
 #' 2) pointrange plots showing the best guess, lower and upper estimates of each Expert for each Strategy.  
 #'
-#' It requires output from Standardize.R, which standardizes the individual estimates to 80% confidence level
-#' and saves results as 'Standardized_Estimates_Long.csv'
+#' It requires output from *Standardize.R*, which standardizes the individual estimates to 80% confidence level
+#' and saves results as **Standardized_Estimates_Long.csv**
 #' 
 #' Load packages
-#+ message = FALSE
-#+ warning = FALSE
-#+ results = 'hide'
+#+ message = FALSE, warning = FALSE
 library(tidyverse)
 library(ggplot2)
 library(cowplot)
 library(gridExtra)
-library(sjPlot)
-# library(RColorBrewer)
 
 #' Read in data from benefits aggregation
+#+ warning = FALSE, message = FALSE
 rlong.std <- read_csv("Standardized_Estimates_Long.csv") # use read_csv to make sure factors read in as character
 
 #' Prepare data for plotting 

@@ -5,15 +5,18 @@
 #' output: github_document
 #' ---
 #'
-#' This code weights benefits by feasibility, 
-#' recalculates expected performance based on weighted benefit estimates, and 
-#' generates the benefit matrix for use in the complementarity analysis. 
-#' Based on sequence from Step 2 section of 1_Cost-Effectiveness.R code from FRE PTM project,
-#' but using a different (shorter) way to implement
+#' This code weights benefits by feasibility, recalculates expected performance based on weighted benefit estimates, 
+#' and generates the benefit matrix for use in the complementarity analysis. Based on 1_Cost-Effectiveness.R code 
+#' from FRE PTM project, but using a different (shorter) way to implement
+#' 
+#' Requires **Aggregated_Benefits.csv** and **Aggregated_Baseline.csv** from *aggregateEstimates.R*, and a
+#' **CostFeas** table of strategy costs and feasibilities
 #'
+#+ warning = FALSE, message = FALSE
 library(tidyverse)
 
-#' Use result from aggregateEstimates.R
+#' Use results from *aggregateEstimates.R*
+#+ warning = FALSE, message = FALSE
 ben.mat.agg <- read_csv("Aggregated_Benefits.csv")
 base.mat.agg <- read_csv("Aggregated_Baseline.csv")
 
@@ -27,7 +30,10 @@ base.mat.agg <- read_csv("Aggregated_Baseline.csv")
 # write_csv(costfeas, "sample_CostFeas.csv")
 
 #' Read in Cost & Feasibility table
+#+ warning = FALSE, message = FALSE
 costfeas <- read_csv("sample_CostFeas.csv") # sample file created by above code
+
+print(costfeas)
 
 costfeas <- costfeas[-1,] # Remove baseline values
 costfeas$Strategy <- as.character(costfeas$Strategy)
@@ -82,5 +88,7 @@ strat.names[which(str_detect(rownames(wt.ben.t), "(?<=_)[:digit:]+")==0)] <-
 
 wt.ben.t <- cbind(strat.names,wt.ben.t)
 names(wt.ben.t)[1] <- "Strategy"
+
+print(wt.ben.t, row.names = FALSE)
 
 write_csv(wt.ben.t, "Benefits.csv") # use this table for the complementarity analysis

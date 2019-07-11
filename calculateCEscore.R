@@ -8,11 +8,13 @@
 #' This code calculates cost-effectiveness (CE) scores and ranks strategies by Benefit, Cost, and CE
 #' Based on algorithm from Step 2 section of 1_Cost-Effectiveness.R code from FRE PTM project,
 #' but using a different way to implement
-
-
+#' 
+#' Requires **Aggregated_Benefits.csv** from *aggregateEstimates.R*, and a **CostFeas** table of strategy cost and feasibility
+#+ warning = FALSE, message = FALSE
 library(tidyverse)
 
 #' Use result from aggregateEstimates.R
+#+ warning = FALSE, message = FALSE
 ben.mat.agg <- read_csv("Aggregated_Benefits.csv")
 
 #' Create table of Cost and Feasibility FOR TESTING ONLY 
@@ -25,6 +27,7 @@ ben.mat.agg <- read_csv("Aggregated_Benefits.csv")
 # write_csv(costfeas, "sample_CostFeas.csv")
 
 #' Read in Cost & Feasibility table
+#+ warning = FALSE, message = FALSE
 costfeas <- read_csv("sample_CostFeas.csv") # sample file created by above code
 costfeas <- costfeas[-1,] # Remove baseline values
 costfeas$Strategy <- as.character(costfeas$Strategy)
@@ -59,6 +62,8 @@ CE_Score <- select(strat.est, c("Strategy", "Benefit", "Cost", "Feasibility", "E
   mutate(., CE_rank = rank(-CE), 
          ExpBenefit_rank = rank(-Exp.Benefit), 
          Cost_rank = rank(Cost))
+
+print(CE_Score)
 
 #' Output results
 write_csv(CE_Score, "Cost_Effectiveness.csv")

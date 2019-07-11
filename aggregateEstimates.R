@@ -5,17 +5,18 @@
 #' output: github_document
 #' ---
 #' 
-#' This code 
-#' a) calculates benefits of each strategy (strategy performance - baseline performance) for each ecological group,
-#' b) aggregates (averages) across experts, and 
-#' c) calculates expected performance under each strategy based on the aggregated benefit estimate.
+#' This code  
+#' a) calculates benefits of each strategy (strategy performance - baseline performance) for each ecological group,  
+#' b) aggregates (averages) across experts, and  
+#' c) calculates expected performance under each strategy based on the aggregated benefit estimate.  
 #' Based on first part of Step 2 section of 1_Cost-Effectiveness.R code from FRE PTM project and
-#' uses output from standardizeConfidence.R 
+#' uses **Standardized_Estimates_Wide.csv** from *standardizeConfidence.R* 
 #' 
-
+#+ warning = FALSE, message = FALSE
 library(tidyverse)
 
 #' Read in data
+#+ warning = FALSE, message = FALSE
 rlong.wide <- read_csv("Standardized_Estimates_Wide.csv")
 rlong.wide$Expert <- as_factor(rlong.wide$Expert)
 rlong.wide$Ecological.Group <- as_factor(rlong.wide$Ecological.Group)
@@ -51,4 +52,3 @@ exp.pop <- cbind(base.mat.agg, exp.pop)
 
 #' Output results
 write_csv(exp.pop, "Aggregated_Performance.csv")
-

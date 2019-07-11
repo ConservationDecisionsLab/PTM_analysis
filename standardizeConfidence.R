@@ -6,23 +6,23 @@
 #' ---
 
 #' This script standardizes the benefit estimates and saves results tables as .csv files: 
-#' 1) Results_tidy.csv - Tidy (long) version of the original Results.csv file
-#' 2) Estimates_per_group.csv - Number of expert estimates for each ecological group
-#' 3) Estimates_by_strategy.csv - Number of expert estimates there are for each strategy+group
-#' 4) Standardized_Estimates_Wide.csv - Standardized estimates in same table format as Results.csv
-#' 5) Standardized_Estimates_Long.csv - Tidy version of Standardized estimates - for use in plotting
+#' 1) **Results_tidy.csv** - Tidy (long) version of the original **Results.csv** file
+#' 2) **Estimates_per_group.csv** - Number of expert estimates for each ecological group
+#' 3) **Estimates_by_strategy.csv** - Number of expert estimates there are for each strategy+group
+#' 4) **Standardized_Estimates_Wide.csv** - Standardized estimates in same table format as Results.csv
+#' 5) **Standardized_Estimates_Long.csv** - Tidy version of Standardized estimates - for use in plotting
 #' 
 #'
-#' It requires output from combineTables.R, which organizes the estimates into a
-#' single table and saves it as 'Results.csv' in the current working directory.
+#' It requires output from *combineTables.R*, which organizes the estimates into a
+#' single table and saves it as **Results.csv** in the current working directory.
 #'
 #' Load packages
-#+ message = FALSE
-#+ warning = FALSE
+#+ warning = FALSE, message = FALSE
 library(tidyverse)
 library(stringr)
 
 #' ## Read in and tidy data
+#+ warning = FALSE, message = FALSE
 results <- read.csv("Results.csv")
 head(results)
 

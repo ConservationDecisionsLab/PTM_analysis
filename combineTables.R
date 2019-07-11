@@ -6,17 +6,17 @@
 #' ---
 
 #' This script reads individual expert estimates from multiple .csv files
-#' and compiles them into a single Results.csv file.
+#' and compiles them into a single **Results.csv** file.
 #' It requires that each expert table is saved as a .csv file in a subfolder within the working directory, 
 #' contain the same number of rows and columns, and no other .csv files are in the same folder.
 
+#+ warning = FALSE, message = FALSE
 library(stringi)
 library(tidyverse)
 library(naniar)
 
 #' Read in the individual tables and combine
-#+ message = FALSE
-#+ warning = FALSE
+#+ warning = FALSE, message = FALSE
 files <- list.files(path = "./expert_est/", # Name of the subfolder in working directory
            pattern = "*.csv", 
            full.names = T)
@@ -74,6 +74,3 @@ byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grass
 
 #' Output results
 write_csv(byexpert, "Results.csv")
-
-
-
