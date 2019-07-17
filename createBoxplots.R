@@ -79,9 +79,10 @@ for (j in seq_along(expcode)) {
            title = paste(grp.levels[i]),
            caption = paste0(
              "Figure ", i, ". Boxplots summarizing the distribution of the lower (L), best guess (B), and upper (Upper) expert estimates of the probability of persistence 
-             of ", grp.levels[i], " under the Baseline scenario and each of the management strategies (S1 - S22). The thick horizontal lines 
-             indicate the median observation, while the surrounding box shows the interquartile range. Any outliers are shown as points beyond the plot whiskers. 
-             Your individual estimates, standardized to 80% confidence level, are shown in blue.")
+             of ", grp.levels[i], " under the Baseline scenario and each of the management strategies (S1 - S22). Lower and Upper estimates 
+             have been standardized to 80% confidence level. The thick horizontal lines indicate the median estimate, while the surrounding box shows the 
+             interquartile range. Any outliers are shown as points beyond the plot whiskers.Your individual estimates, standardized to 80% confidence level, 
+             are shown in blue.")
            ) +  
       ylim(0, 100) # set the y-axis limits from 0-100
 
@@ -141,7 +142,7 @@ for (j in seq_along(expcode)) {
            caption = paste0(
              "Figure ", i, ". Plots of each expert estimate of the probability of persistence of ", grp.levels[i], " under the Baseline scenario and each of the 
              management strategies (S1 - S22). Each point indicates the best guess of one expert, with the lines corresponding to that expert’s 
-             lower and upper estimates. Your individual estimates, standardized to 80% confidence level, are plotted in blue.")
+             lower and upper estimates standardized to 80% confidence level. Your individual estimates are plotted in blue.")
            ) +
       ylim(0, 100) # set the y-axis limits from 0-100
 

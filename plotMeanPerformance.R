@@ -34,6 +34,8 @@ if (weighted == 0) {
 }
 
 exp.pop <- read_csv(paste0(est.file, ".csv", sep = ""))
+grp.levels <- unique(exp.pop$Ecological.Group)
+exp.pop$Ecological.Group <- factor(exp.pop$Ecological.Group, levels = grp.levels)
 
 # Organize data into correct format for plotting
 exp.pop.long <- exp.pop %>%
@@ -58,13 +60,17 @@ temp.plot2 <-
   theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # top, right, bottom and left margins around the plot area
         panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), # adjust space between y-axis numbers and y-axis label
-        axis.text.x = element_text(size = 10, angle = 60, hjust = 0.5, vjust = 0.5) 
+        axis.text.x = element_text(size = 10, angle = 60, hjust = 0.5, vjust = 0.5),
+        plot.caption = element_text(size = 10, hjust = 0)
   ) +
   facet_wrap( ~ Ecological.Group, nrow = 3, ncol = 3) +  # create a separate panel for each ecological group
   scale_x_discrete(breaks = strat.levels, labels = c("B", 1:22) ) +
   labs(x = "Strategies",
        y = "Probability of persistence (%)",
-       title = "Unweighted mean estimates, standardized to 80% confidence level"
+       title = "Unweighted mean estimates, standardized to 80% confidence level", 
+       caption = "Figure 1. Estimated probability of persistence of each ecological group under the Baseline scenario (B) and each of the management strategies (1 - 22). 
+       Values are based on expert best guess and lower and upper estimates (standardized to 80% confidence level), averaged over number of experts who 
+       provided estimates for the strategy and ecological group."
   ) +
   ylim(0, 100) 
 
