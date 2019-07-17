@@ -20,17 +20,24 @@ library(naniar)
 files <- list.files(path = "./expert_est/", # Name of the subfolder in working directory
            pattern = "*.csv", 
            full.names = T)
-temp <- read_csv(files[1], skip = 8) # Skips first few lines containing worksheet instructions
-temp <- temp[1:9,1:116] %>% # Keeps only the relevant rows and columns (e.g. excludes the columns used to check data quality)
-  select(.,-contains("Quality")) %>%
-  add_column(.,Expert=rep(1,9),.before="Ecological Group")
+
+skiplines <- 14 # number of header rows to skip (first few lines contain worksheet instructions which are not needed)
+nstrat <- 22 # number of management strategies (including combinations, but excluding baseline)
+numcols <- (nstrat+1)*5 + 1 # total number of columns to read in (5 columns for each strategy and the baseline [Best guess, Lower, Upper, Confidence, and a Quality check column], plus 1 column for group names)
+ngroups <- 9 # number of ecological groups (rows)
+experts <- c(1:4, 6:14, 16:19) # vector of expert codes, should correspond to the same order as in 'files' # AC: Temporary fix while waiting for 2 experts (#5 and #15)
+
+temp <- read_csv(files[1], skip = skiplines) 
+temp <- temp[1:ngroups,1:numcols] %>% # Keeps only the relevant rows and columns 
+  select(.,-contains("Quality")) %>% # Excludes the columns used to check data quality
+  add_column(.,Expert=rep(experts[1],ngroups),.before="Ecological Group") # add a column for expert code
 byexpert <- temp
 
-for (i in 3:length(files)){ # 3 because I am skipping expert #2. Change this to 2 if want to read that file
-  temp <- read_csv(files[i], skip = 8)
-  temp <- temp[1:9,1:116] %>%
+for (i in 2:length(experts)){ # else use length(files) if all estimates are available
+  temp <- read_csv(files[i], skip = skiplines)
+  temp <- temp[1:ngroups,1:numcols] %>%
     select(.,-contains("Quality")) %>%
-    add_column(.,Expert=rep(i,9),.before="Ecological Group")
+    add_column(.,Expert=rep(experts[i],ngroups),.before="Ecological Group")
   byexpert<-rbind(byexpert,temp)
   }
 
@@ -67,10 +74,11 @@ for (i in 1:length(bestguess)) {
 }
 
 #' Standardize group labels if needed
-byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest Species")==1)] <- "Mature Forest and Peatland"
-byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/ Peatland Species")==1)] <- "Mature Forest and Peatland"
-byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/Peatland Species")==1)] <- "Mature Forest and Peatland"
-byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grassland/Open Habitat species")==1)] <- "Grassland or Open Habitats"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest Species")==1)] <- "Mature Forest and Peatland Species"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/ Peatland Species")==1)] <- "Mature Forest and Peatland Species"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/Peatland Species")==1)] <- "Mature Forest and Peatland Species"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grassland/Open Habitat species")==1)] <- "Grassland or Open Habitat Species"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Forest Openings and Young Forest")==1)] <- "Forest Openings and Young Forest Species"
 
 #' Output results
 write_csv(byexpert, "Results.csv")
