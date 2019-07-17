@@ -63,7 +63,8 @@ for (j in seq_along(expcode)) {
                                                         r = 10,
                                                         b = 0,
                                                         l = 0) # adjust space between y-axis numbers and y-axis label
-                                        )
+                                        ),
+            plot.caption = element_text(size = 10, hjust = 0)
             ) + 
       facet_wrap( ~ Strategy, nrow = 3) +  # create a separate panel of estimates for each management strategy
       scale_x_discrete(name = "",
@@ -75,7 +76,12 @@ for (j in seq_along(expcode)) {
                         ) + 
       labs(x = "", 
            y = "Probability of persistence (%)", 
-           title = paste(grp.levels[i])
+           title = paste(grp.levels[i]),
+           caption = paste0(
+             "Figure ", i, ". Boxplots summarizing the distribution of the lower (L), best guess (B), and upper (Upper) expert estimates of the probability of persistence 
+             of ", grp.levels[i], " under the Baseline scenario and each of the management strategies (S1 - S22). The thick horizontal lines 
+             indicate the median observation, while the surrounding box shows the interquartile range. Any outliers are shown as points beyond the plot whiskers. 
+             Your individual estimates, standardized to 80% confidence level, are shown in blue.")
            ) +  
       ylim(0, 100) # set the y-axis limits from 0-100
 
@@ -90,6 +96,7 @@ for (j in seq_along(expcode)) {
          width = 11, height = 8.5, units = "in")
   
 }
+print(temp.plot)
 
 #' Plot each expert estimate separately (x-axis = Expert, y-axis point = Best guess, range = lower->upper)
 
@@ -122,14 +129,20 @@ for (j in seq_along(expcode)) {
                                                         b = 0,
                                                         l = 0)), # adjust space between y-axis numbers and y-axis label
             axis.text.x = element_blank(),
-            legend.justification=c(1,0), legend.position=c(0.98,-0.05) # repositions legend box
+            legend.justification=c(1,0), legend.position=c(0.98,-0.05), # repositions legend box
+            plot.caption = element_text(size = 10, hjust = 0)
             ) +  
       scale_color_manual(values = c("grey", "blue"), guide = FALSE) + # turn this off if ploting all experts together
       # scale_color_brewer(palette='Paired') + # changes color palette
       facet_wrap( ~ Strategy, nrow = 3) +  # create a separate panel of estimates for each management strategy
       labs(x = "Experts",
            y = "Probability of persistence (%)",
-           title = paste(grp.levels[i])) +
+           title = paste(grp.levels[i]),
+           caption = paste0(
+             "Figure ", i, ". Plots of each expert estimate of the probability of persistence of ", grp.levels[i], " under the Baseline scenario and each of the 
+             management strategies (S1 - S22). Each point indicates the best guess of one expert, with the lines corresponding to that expert’s 
+             lower and upper estimates. Your individual estimates, standardized to 80% confidence level, are plotted in blue.")
+           ) +
       ylim(0, 100) # set the y-axis limits from 0-100
 
     grp.list[[i]] <- temp.plot2
@@ -150,3 +163,4 @@ for (j in seq_along(expcode)) {
     )
   
 }
+print(temp.plot2)

@@ -1,69 +1,21 @@
 Plot Standardized Benefit Estimates
 ================
 Adapted for the SJR PTM by Abbey Camaclang
-28 June 2019
+10 Jul 2019
 
-Based on 'Boxplot\_script.R' from FRE PTM project \[Found in Dropbox folder "\_River\_Resilience9\_Plot\_scriptsdata scripts"\] This script creates two plots for each Ecological Group:
+Based on *Boxplot\_script.R* from FRE PTM project \[Found in Dropbox folder "\_River\_Resilience9\_Plot\_scriptsdata scripts"\] This script creates two plots for each Ecological Group:
 1) boxplots of the best guess, lower, and upper estimates for each Strategy from all Experts;
 2) pointrange plots showing the best guess, lower and upper estimates of each Expert for each Strategy.
 
-It requires output from Standardize.R, which standardizes the individual estimates to 80% confidence level and saves results as 'Standardized\_Estimates\_Long.csv'
+It requires output from *Standardize.R*, which standardizes the individual estimates to 80% confidence level and saves results as **Standardized\_Estimates\_Long.csv**
 
 Load packages
 
 ``` r
 library(tidyverse)
-```
-
-    ## -- Attaching packages ----------------------------------------------------------------------------------------------------------------------- tidyverse 1.2.1 --
-
-    ## v ggplot2 3.1.1     v purrr   0.3.2
-    ## v tibble  2.1.1     v dplyr   0.8.1
-    ## v tidyr   0.8.3     v stringr 1.4.0
-    ## v readr   1.3.1     v forcats 0.4.0
-
-    ## -- Conflicts -------------------------------------------------------------------------------------------------------------------------- tidyverse_conflicts() --
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
-
-``` r
 library(ggplot2)
 library(cowplot)
-```
-
-    ## 
-    ## Attaching package: 'cowplot'
-
-    ## The following object is masked from 'package:ggplot2':
-    ## 
-    ##     ggsave
-
-``` r
 library(gridExtra)
-```
-
-    ## 
-    ## Attaching package: 'gridExtra'
-
-    ## The following object is masked from 'package:dplyr':
-    ## 
-    ##     combine
-
-``` r
-library(sjPlot)
-```
-
-    ## #refugeeswelcome
-
-    ## 
-    ## Attaching package: 'sjPlot'
-
-    ## The following objects are masked from 'package:cowplot':
-    ## 
-    ##     plot_grid, save_plot
-
-``` r
-# library(RColorBrewer)
 ```
 
 Read in data from benefits aggregation
@@ -72,35 +24,26 @@ Read in data from benefits aggregation
 rlong.std <- read_csv("Standardized_Estimates_Long.csv") # use read_csv to make sure factors read in as character
 ```
 
-    ## Parsed with column specification:
-    ## cols(
-    ##   Expert = col_double(),
-    ##   Ecological.Group = col_character(),
-    ##   Estimate = col_character(),
-    ##   Value = col_double(),
-    ##   Strategy = col_character(),
-    ##   Est.Type = col_character(),
-    ##   St.Value = col_double()
-    ## )
-
 Prepare data for plotting
 
 ``` r
 strat.levels <- unique(rlong.std$Strategy)
 grp.levels <- unique(rlong.std$Ecological.Group)
-expcode <- unique(rlong.std$Expert)
+est.levels <- c("Lower", "Best.Guess", "Upper")
+expcode <- unique(rlong.std$Expert) 
 
 # Order the strategies to plot in the desired order
-rlong.std$Strategy <- factor(rlong.std$Strategy,levels = strat.levels)
+rlong.std$Strategy <- factor(rlong.std$Strategy, levels = strat.levels)
 
 # Subset to remove confidence estimates
-rlong.std <- subset(rlong.std, Est.Type %in% c("Best.Guess", "Lower", "Upper")) 
+rlong.std <- subset(rlong.std, Est.Type %in% c("Best.Guess", "Lower", "Upper"))
+rlong.std$Est.Type <- factor(rlong.std$Est.Type, levels = est.levels)
 ```
 
 Plot group estimates as boxplots and save as .pdf
 
 ``` r
-for (j in expcode) {
+for (j in seq_along(expcode)) {
   
   grp.list <- list()
   
@@ -118,25 +61,31 @@ for (j in expcode) {
                  color = 'blue'
                  ) +
       theme_cowplot() +  # use the theme "cowplot" for the plots, which is a nice minimalist theme
-      theme(plot.margin = unit(c(0, 1, 0, 0.75), "cm"), # adjust margins around the outside of the plot (bottom=0,left=1,top=0,right=0.5)
+      theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # adjust margins around the outside of the plot (top, right, bottom, left)
             panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
             axis.title.y = element_text(margin = margin(t = 0, 
                                                         r = 10,
                                                         b = 0,
                                                         l = 0) # adjust space between y-axis numbers and y-axis label
-                                        )
+                                        ),
+            plot.caption = element_text(size = 10, hjust = 0)
             ) + 
       facet_wrap( ~ Strategy, nrow = 3) +  # create a separate panel of estimates for each management strategy
       scale_x_discrete(name = "",
-                       breaks = c("Best.Guess", "Lower", "Upper"),
-                       labels = c("B", "L", "H") # Give the x-axis variables shortened labels
+                       breaks = c("Lower", "Best.Guess", "Upper"),
+                       labels = c("L", "B", "U") # Give the x-axis variables shortened labels
                        ) + 
-      scale_fill_manual(values = c("gray80", "white", "white"), # Assign colours to each type of estimate and don't show a legend
+      scale_fill_manual(values = c("white", "gray80", "white"), # Assign colours to each type of estimate and don't show a legend
                         guide = FALSE 
                         ) + 
       labs(x = "", 
            y = "Probability of persistence (%)", 
-           title = paste(grp.levels[i])
+           title = paste(grp.levels[i]),
+           caption = paste0(
+             "Figure ", i, ". Boxplots summarizing the distribution of the lower (L), best guess (B), and upper (Upper) expert estimates of the probability of persistence 
+             of ", grp.levels[i], " under the Baseline scenario and each of the management strategies (S1 - S22). The thick horizontal lines 
+             indicate the median observation, while the surrounding box shows the interquartile range. Any outliers are shown as points beyond the plot whiskers. 
+             Your individual estimates, standardized to 80% confidence level, are shown in blue.")
            ) +  
       ylim(0, 100) # set the y-axis limits from 0-100
 
@@ -148,10 +97,13 @@ for (j in expcode) {
   ggsave(filename = paste0("Exp", expcode[j], ".pdf", sep=''), 
          plot1, 
          path = "./boxplots/", 
-         width = 10, height = 8, units = "in")
+         width = 11, height = 8.5, units = "in")
   
 }
+print(temp.plot)
 ```
+
+![](createBoxplots_files/figure-markdown_github/unnamed-chunk-4-1.png)
 
 Plot each expert estimate separately (x-axis = Expert, y-axis point = Best guess, range = lower-&gt;upper)
 
@@ -168,7 +120,7 @@ for (j in seq_along(expcode)) {
   for (i in seq_along(grp.levels)) {
   
     temp.expdata <- subset(rlong.std.wide, Ecological.Group == grp.levels[i]) %>%
-      mutate(expi = ifelse(Expert == expcode[j], T, F))
+      mutate(expi = ifelse(Expert == expcode[j], T, F)) # this column allows for highlighting individual expert estimates
     temp.plot2 <-
       ggplot(temp.expdata, aes(x = Expert, # using the data Ecological group, plot Experts on X-axis
                                y = Best.Guess, # and corresponding standardized estimates on y-axis
@@ -178,21 +130,27 @@ for (j in seq_along(expcode)) {
              ) +  
       geom_pointrange(aes(ymin = Lower, ymax = Upper)) +
       theme_cowplot() +  # use the theme "cowplot" for the plots, which is a nice minimalist theme
-      theme(plot.margin = unit(c(0, 1, 0, 0.75), "cm"), # adjust margins around the outside of the plot (bottom=0,left=1,top=0,right=0.5)
+      theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # adjust margins around the outside of the plot
             panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
             axis.title.y = element_text(margin = margin(t = 0,
                                                         r = 10,
                                                         b = 0,
                                                         l = 0)), # adjust space between y-axis numbers and y-axis label
             axis.text.x = element_blank(),
-            legend.justification=c(1,0), legend.position=c(0.98,-0.05) # repositions legend box
+            legend.justification=c(1,0), legend.position=c(0.98,-0.05), # repositions legend box
+            plot.caption = element_text(size = 10, hjust = 0)
             ) +  
       scale_color_manual(values = c("grey", "blue"), guide = FALSE) + # turn this off if ploting all experts together
       # scale_color_brewer(palette='Paired') + # changes color palette
       facet_wrap( ~ Strategy, nrow = 3) +  # create a separate panel of estimates for each management strategy
       labs(x = "Experts",
            y = "Probability of persistence (%)",
-           title = paste(grp.levels[i])) +
+           title = paste(grp.levels[i]),
+           caption = paste0(
+             "Figure ", i, ". Plots of each expert estimate of the probability of persistence of ", grp.levels[i], " under the Baseline scenario and each of the 
+             management strategies (S1 - S22). Each point indicates the best guess of one expert, with the lines corresponding to that expert’s 
+             lower and upper estimates. Your individual estimates, standardized to 80% confidence level, are plotted in blue.")
+           ) +
       ylim(0, 100) # set the y-axis limits from 0-100
 
     grp.list[[i]] <- temp.plot2
@@ -209,8 +167,11 @@ for (j in seq_along(expcode)) {
     filename = paste0("Indiv_Exp", expcode[j], ".pdf", sep=''), # if higlighting individual expert estimates
     plot2, 
     path = "./pointrange/", 
-    width = 10, height = 8, units = "in"
+    width = 11, height = 8.5, units = "in"
     )
   
 }
+print(temp.plot2)
 ```
+
+![](createBoxplots_files/figure-markdown_github/unnamed-chunk-5-1.png)
