@@ -18,10 +18,11 @@ library(cowplot)
 uncrtn.anal <- 1 # 1 if running cost uncertainty analysis, 0 if not.
 MC <-  10000 # number of iterations
 u <- 0.3 # prop. variation from the best estimate
+a <- 1000000 # scaling to get cost and benefits in same order of magnitude
 
 #' Use result from aggregateEstimates.R
 #+ warning = FALSE, message = FALSE
-ben.mat.agg <- read_csv("Aggregated_Benefits_groupwtd.csv")
+ben.mat.agg <- read_csv("Aggregated_Benefits_groupWtd_Newcombos.csv")
 
 #' Create table of Cost and Feasibility FOR TESTING ONLY 
 # feas <- c(1, runif(22, min = 0.5, max = 0.95))
@@ -34,7 +35,7 @@ ben.mat.agg <- read_csv("Aggregated_Benefits_groupwtd.csv")
 
 #' Read in Cost & Feasibility table
 #+ warning = FALSE, message = FALSE
-costfeas <- read_csv("CostFeas2.csv") # sample file created by above code
+costfeas <- read_csv("CostFeas2_Newcombos.csv") # sample file created by above code
 costfeas <- costfeas[-1,] # Remove baseline values
 costfeas$Strategy <- as.character(costfeas$Strategy)
 costfeas$Strategy <- as_factor(costfeas$Strategy)
@@ -60,7 +61,7 @@ sum.ben$Strategy <- as_factor(as.character(sum.ben$Strategy))
 if (uncrtn.anal == 0) {
   # Join with cost/feasibility table and calculate cost-effectiveness
   strat.est <- full_join(sum.ben, costfeas, by="Strategy") %>%
-    mutate(., Sc.Cost = Cost/1000000, # scale costs to get reasonable values
+    mutate(., Sc.Cost = Cost/a, # scale costs to get reasonable values
            Exp.Benefit = Benefit * Feasibility, # weight benefits
            CE = (Benefit * Feasibility)/Sc.Cost) # calculate cost-effectiveness scores
   
@@ -72,7 +73,7 @@ if (uncrtn.anal == 0) {
   print(CE_Score)
   
   #' Output results
-  write_csv(CE_Score, "Cost_Effectiveness_grpwtd2_high.csv")
+  write_csv(CE_Score, "Cost_Effectiveness_grpwtd2_Newcombos.csv")
 
 } else {
   samples <- matrix(nrow = nrow(costfeas),ncol = MC)
@@ -93,7 +94,7 @@ if (uncrtn.anal == 0) {
     
     # Join with cost/feasibility table and calculate cost-effectiveness
     strat.est <- full_join(sum.ben, costfeas, by="Strategy") %>%
-      mutate(., Sc.Cost = Cost/1000000, # scale costs to get reasonable values
+      mutate(., Sc.Cost = Cost/a, # scale costs to get reasonable values
              Exp.Benefit = Benefit * Feasibility, # weight benefits
              CE = (Benefit * Feasibility)/Sc.Cost) # calculate cost-effectiveness scores
     
@@ -104,7 +105,7 @@ if (uncrtn.anal == 0) {
              Cost_rank = rank(Cost))
     MC.CE_Score[[it]] <- CE_Score
   }
-  MC.CE_Table <- lapply(MC.CE_Score, "[", 1:22, "CE")
+  MC.CE_Table <- lapply(MC.CE_Score, "[", 1:length(strat.names), "CE")
   MC.Results <- matrix(unlist(MC.CE_Table), ncol = MC, byrow = FALSE)
   MC.Results <- data.frame(costfeas$Strategy, MC.Results)
   names(MC.Results)[1] <- "Strategy"
