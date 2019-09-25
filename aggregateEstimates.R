@@ -80,7 +80,7 @@ if (wt.by.numspp == 1) {
     left_join(., fullwts, by = c("Ecological.Group", "Strategy")) %>%
     mutate(Wts = NumSppScored/x) %>%
     mutate(Wt.Best.guess = Best.guess*Wts, Wt.Lower = Lower*Wts, Wt.Upper = Upper*Wts)
-
+  
   # Aggregate (sum) the weighted estimates and re-organize table for calculating performance
   ben.mat.agg <- aggregate(ben.mat.joined[,11:13], by = list(Ecological.Group = ben.mat.joined$Ecological.Group, Strategy = ben.mat.joined$Strategy), FUN = sum, na.rm = TRUE) %>%
     gather(., key = "Est.Type", value = "Wt.Avg", Wt.Best.guess, Wt.Lower, Wt.Upper)
@@ -128,8 +128,6 @@ if (wt.by.numspp == 1) {
       
     }
   }
-
-print(ben.mat.agg)
 
 #' Calculate averaged performance: add averaged benefit estimates to the (averaged) baseline
 exp.pop <- ben.mat.agg[,2:ncol(ben.mat.agg)] + as.matrix(base.mat.agg[,2:ncol(base.mat.agg)])
