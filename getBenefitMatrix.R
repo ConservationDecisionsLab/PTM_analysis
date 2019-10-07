@@ -17,8 +17,8 @@ library(tidyverse)
 
 #' Use results from *aggregateEstimates.R*
 #+ warning = FALSE, message = FALSE
-ben.mat.agg <- read_csv("Aggregated_Benefits.csv")
-base.mat.agg <- read_csv("Aggregated_Baseline.csv")
+ben.mat.agg <- read_csv("Aggregated_Benefits_Newcombos.csv")
+base.mat.agg <- read_csv("Aggregated_Baseline_rev.csv")
 
 #' Create table of Cost and Feasibility FOR TESTING ONLY 
 # feas <- c(1, runif(22, min = 0.5, max = 0.95))
@@ -31,7 +31,7 @@ base.mat.agg <- read_csv("Aggregated_Baseline.csv")
 
 #' Read in Cost & Feasibility table
 #+ warning = FALSE, message = FALSE
-costfeas <- read_csv("sample_CostFeas.csv") # sample file created by above code
+costfeas <- read_csv("CostFeas2_Newcombos.csv") # sample file created by above code
 
 print(costfeas)
 
@@ -79,6 +79,18 @@ wt.ben <- perf.mat %>%
 wt.ben.t <- data.frame(t(wt.ben[,-1]))
 names(wt.ben.t) <- wt.ben$Ecological.Group # column names
 
+# Also get upper and lower values for uncertainty analysis
+wt.ben.low <- perf.mat %>%
+  select(., c(Ecological.Group, contains("Lower"))) # select only Best Guess estimates from perf.mat
+wt.ben.low.t <- data.frame(t(wt.ben.low[,-1]))
+names(wt.ben.low.t) <- wt.ben.low$Ecological.Group # column names
+
+wt.ben.hi <- perf.mat %>%
+  select(., c(Ecological.Group, contains("Upper"))) # select only Best Guess estimates from perf.mat
+wt.ben.hi.t <- data.frame(t(wt.ben.hi[,-1]))
+names(wt.ben.hi.t) <- wt.ben.hi$Ecological.Group # column names
+
+
 # Create vector of strategy names to add to the table
 strat.names <- vector()
 strat.names[which(str_detect(rownames(wt.ben.t), "(?<=_)[:digit:]+")==1)] <- 
@@ -89,6 +101,14 @@ strat.names[which(str_detect(rownames(wt.ben.t), "(?<=_)[:digit:]+")==0)] <-
 wt.ben.t <- cbind(strat.names,wt.ben.t)
 names(wt.ben.t)[1] <- "Strategy"
 
-print(wt.ben.t, row.names = FALSE)
+# print(wt.ben.t, row.names = FALSE)
+
+wt.ben.low.t <- cbind(strat.names, wt.ben.low.t)
+names(wt.ben.low.t)[1] <- "Strategy"
+
+wt.ben.hi.t <- cbind(strat.names, wt.ben.hi.t)
+names(wt.ben.hi.t)[1] <- "Strategy"
 
 write_csv(wt.ben.t, "Benefits.csv") # use this table for the complementarity analysis
+write_csv(wt.ben.low.t, "Lower.csv")
+write_csv(wt.ben.hi.t, "Upper.csv")
