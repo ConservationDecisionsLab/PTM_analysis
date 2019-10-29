@@ -23,19 +23,19 @@ library(stringr)
 
 #' ## Read in and tidy data
 #+ warning = FALSE, message = FALSE
-results <- read.csv("Results.csv")
-head(results)
+results <- read.csv("Results_rev.csv")
+# head(results)
 
 #' Use tidyr package to transform data to tidy version, with single columns for Estimate (e.g., best guess, lower, upper) and Value (value of estimate, 0-100)
 rlong <-
   gather(results,
          key = Estimate,
          value = Value,
-         Best.guess:Confidence_22) #' <!-- AC: updated with the SJR data column names -->
+         Best.guess:Confidence_22) #' <!-- AC: update with the data column names -->
 head(rlong)
 
 rlong <- na.omit(rlong)
-write_csv(rlong, "Results_tidy.csv")
+write_csv(rlong, "Results_tidyrev.csv")
 
 rlong$Value <- as.numeric((rlong$Value))
 # str(rlong) # Check data type
@@ -46,7 +46,7 @@ rlong$Value <- as.numeric((rlong$Value))
 table.data <-spread(rlong, Estimate, Value) 
 table.subset <- table.data[, c(1, 2)] # Subset table.data to only include the columns "Expert" and "Ecological.Group"
 exp.table <- table(table.subset$Ecological.Group)
-write.csv(exp.table, "Estimates_per_group.csv", row.names=FALSE)
+write.csv(exp.table, "Estimates_per_group_rev.csv", row.names=FALSE)
 exp.table
 
 #' Create new columns to specify Estimate Type and Strategy separately
@@ -69,7 +69,7 @@ table.subset2 <- subset(rlong, Est.Type=="Best.Guess") # Subset to count how man
 strat.levels <- unique(table.subset2$Strategy)
 table.subset2$Strategy <- factor(table.subset2$Strategy,levels = strat.levels) #' <!-- AC: Note that using as.factor() changes the order to alphabetical -->
 st.table <- table(table.subset2$Ecological.Group, table.subset2$Strategy)
-write.csv(st.table, "Estimates_by_strategy.csv")
+write.csv(st.table, "Estimates_by_strategy_rev.csv")
 st.table
 
 
@@ -130,5 +130,5 @@ rlong.wide$Ecological.Group<-factor(rlong.wide$Ecological.Group, levels=grp.leve
 rlong.wide <- with(rlong.wide, rlong.wide[order(Expert, Ecological.Group),]) 
 
 # Output results
-write_csv(rlong.wide, "Standardized_Estimates_Wide.csv") 
-write_csv(rlong.std, "Standardized_Estimates_Long.csv")
+write_csv(rlong.wide, "Standardized_Estimates_Widerev.csv") 
+write_csv(rlong.std, "Standardized_Estimates_Longrev.csv")
