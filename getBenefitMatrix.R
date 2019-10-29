@@ -20,7 +20,7 @@ library(tidyverse)
 ben.mat.agg <- read_csv("Aggregated_Benefits_Newcombos.csv")
 base.mat.agg <- read_csv("Aggregated_Baseline_rev.csv")
 
-#' Create table of Cost and Feasibility FOR TESTING ONLY 
+#' Create table of Cost and Feasibility if needed for TESTING purposes
 # feas <- c(1, runif(22, min = 0.5, max = 0.95))
 # cost <- c(0, runif(22, min = 1000000, max = 400000000))
 # Strategy <- c("Baseline", paste0("S", seq(1:22)))
