@@ -17,7 +17,7 @@ library(naniar)
 
 #' Read in the individual tables and combine
 #+ warning = FALSE, message = FALSE
-files <- list.files(path = "./expert_est/", # Name of the subfolder in working directory
+files <- list.files(path = "./Benefits/", # Name of the subfolder in working directory that contains the files
            pattern = "*.csv", 
            full.names = T)
 
@@ -25,7 +25,7 @@ skiplines <- 14 # number of header rows to skip (first few lines contain workshe
 nstrat <- 22 # number of management strategies (including combinations, but excluding baseline)
 numcols <- (nstrat+1)*5 + 1 # total number of columns to read in (5 columns for each strategy and the baseline [Best guess, Lower, Upper, Confidence, and a Quality check column], plus 1 column for group names)
 ngroups <- 9 # number of ecological groups (rows)
-experts <- c(1:4, 6:14, 16:19) # vector of expert codes, should correspond to the same order as in 'files' # AC: Temporary fix while waiting for 2 experts (#5 and #15)
+experts <- c(1:19) # vector of expert codes, should correspond to the same order as in 'files'
 
 temp <- read_csv(files[1], skip = skiplines) 
 temp <- temp[1:ngroups,1:numcols] %>% # Keeps only the relevant rows and columns 
@@ -73,7 +73,7 @@ for (i in 1:length(bestguess)) {
   byexpert[l_temp,conf[i]] <- conf_base[l_temp,] # using the index for lower as some may have been left blank/NA
 }
 
-#' Standardize group labels if needed
+#' Standardize group labels if needed (this will be project specific)
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest Species")==1)] <- "Mature Forest and Peatland Species"
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/ Peatland Species")==1)] <- "Mature Forest and Peatland Species"
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/Peatland Species")==1)] <- "Mature Forest and Peatland Species"
@@ -81,4 +81,4 @@ byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grass
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Forest Openings and Young Forest")==1)] <- "Forest Openings and Young Forest Species"
 
 #' Output results
-write_csv(byexpert, "Results.csv")
+write_csv(byexpert, "Results_rev.csv")
