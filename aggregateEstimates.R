@@ -9,9 +9,10 @@
 #' a) calculates benefits of each strategy (strategy performance - baseline performance) for each ecological group,  
 #' b) aggregates (averages) across experts, and  
 #' c) calculates expected performance under each strategy based on the aggregated benefit estimate.  
+#'   
 #' Based on first part of Step 2 section of 1_Cost-Effectiveness.R code from FRE PTM project and
-#' uses **Standardized_Estimates_Wide.csv** from *standardizeConfidence.R*.    
-  
+#' uses **Standardized_Estimates_Wide.csv** from *standardizeConfidence.R*.  
+#'   
 #' If some of the expert estimates need to be weighted differently, must provide a table listing the species in each 
 #' ecological group *EcolGroupsList.csv* and a table *SpecialCases.csv* indicating which expert estimates for which 
 #' ecological groups and strategies require different weights, and the number of species scored for that estimate.
@@ -20,9 +21,7 @@
 library(tidyverse)
 
 #' Specify how estimates should be aggregated
-#wt.by.numspp <- readline(prompt="Weight estimates by number of species scored? Enter 1 for Yes, 0 for No: ") # if experts scored only some of the species in a group, weight estimates by the number of species scored for each strategy
-#wt.by.numspp <- as.numeric(wt.by.numspp)
-wt.by.numspp <- 1
+wt.by.numspp <- 1 # (1) if weighting each expert estimate based on the number of species in each group that they scored, (0) if assuming all species in the group were considered in the estimate
 
 #' Read in and prepare data
 #+ warning = FALSE, message = FALSE
@@ -46,6 +45,7 @@ ben.mat <- cbind(DF[,1:2], ben.mat )
 base.mat <- cbind(DF[,1:2], base.mat)
 
 #' Aggregate benefit estimates: average benefit estimates for each species group + strategy across experts
+#+ warning = FALSE, message = FALSE
 if (wt.by.numspp == 1) {
   
   # Re-organize benefits table to make it easier to weight estimates
@@ -133,7 +133,7 @@ if (wt.by.numspp == 1) {
 exp.pop <- ben.mat.agg[,2:ncol(ben.mat.agg)] + as.matrix(base.mat.agg[,2:ncol(base.mat.agg)])
 exp.pop <- cbind(base.mat.agg, exp.pop)
 
-print(exp.pop)
+# print(exp.pop)
 
 #' Weight benefits by number of species in group (multiply)
 grpwtd_ben <- ben.mat.agg[,2:ncol(ben.mat.agg)]*numspp
