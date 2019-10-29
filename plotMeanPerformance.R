@@ -21,10 +21,10 @@ library(gridExtra)
 #' Prepare data for plotting
 #+ warning = FALSE, message = FALSE
 # Specify which file to read
-weighted <- 0
+weighted <- 1
 
 if (weighted == 0) {
-  est.file <- "Aggregated_Performance"
+  est.file <- "Aggregated_Performance_rev"
 } else {
   if (weighted == 1) {
     est.file <- "Aggregated_Performance_weighted"
@@ -50,12 +50,19 @@ plot.data <- select(exp.pop.long, -Estimate) %>%
 
 strat.levels <- levels(plot.data$Strategy)
 
-write_csv(plot.data, paste0(est.file, "_tidy.csv", sep = ""))
+write_csv(plot.data, paste0(est.file, "_tidyrev.csv", sep = ""))
+
+base.data <- plot.data[which(plot.data$Strategy=="Baseline"),]
+plot.data.nobase <- plot.data[which(plot.data$Strategy!="Baseline"),]
+  
 
 #' Plot mean estimates by strategy for all groups
 temp.plot2 <- 
-  ggplot(plot.data, aes(x = Strategy, y = Best.guess) ) +
-  geom_pointrange(aes(ymin = Lower, ymax = Upper)) +
+  ggplot(plot.data.nobase, aes(x = Strategy, y = Wt.Best.guess) ) +
+  geom_pointrange(aes(ymin = Wt.Lower, ymax = Wt.Upper)) +
+  geom_hline(aes(yintercept = Wt.Best.guess), base.data, colour = "blue") +
+  geom_hline(aes(yintercept = Wt.Lower), base.data, colour = "blue", lty = "dashed") +
+  geom_hline(aes(yintercept = Wt.Upper), base.data, colour = "blue", lty = "dashed") +
   theme_cowplot() +  # minimalist theme from cowplot package
   theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # top, right, bottom and left margins around the plot area
         panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
@@ -64,13 +71,13 @@ temp.plot2 <-
         plot.caption = element_text(size = 10, hjust = 0)
   ) +
   facet_wrap( ~ Ecological.Group, nrow = 3, ncol = 3) +  # create a separate panel for each ecological group
-  scale_x_discrete(breaks = strat.levels, labels = c("B", 1:22) ) +
+  scale_x_discrete(breaks = strat.levels, labels = c("B", 1:23) ) +
   labs(x = "Strategies",
        y = "Probability of persistence (%)",
-       title = "Unweighted mean estimates, standardized to 80% confidence level", 
-       caption = "Figure 1. Estimated probability of persistence of each ecological group under the Baseline scenario (B) and each of the management strategies (1 - 22). 
-       Values are based on expert best guess and lower and upper estimates (standardized to 80% confidence level), averaged over number of experts who 
-       provided estimates for the strategy and ecological group."
+       title = "Mean estimates, standardized to 80% confidence level" 
+       #caption = "Figure 1. Estimated probability of persistence of each ecological group under the Baseline scenario (B) and each of the management strategies (1 - 22). 
+       #Values are based on expert best guess and lower and upper estimates (standardized to 80% confidence level), averaged over number of experts who 
+       #provided estimates for the strategy and ecological group."
   ) +
   ylim(0, 100) 
 
