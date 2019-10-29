@@ -1,35 +1,36 @@
-#' ---
-#' title: "Uncertainty Analysis (Benefit estimates)"
-#' author: "Abbey Camaclang"
-#' date: "27 Aug 2019"
-#' output: github_document
-#' ---
+Uncertainty Analysis (Benefit estimates)
+================
+Abbey Camaclang
+27 Aug 2019
 
-#' This code is used to run the uncertainty analysis using the confidence bounds from experts' benefit estimates.  
-#' 
-#' Based on algorithm of R code written by Danial Stratford (danial.stratford@csiro.au), found in PTM Handbook Supporting Info.   
-#' For each MC iteration,  
-#' 1. Sample performance value for each expert - ecological group - strategy using rpert from mc2d package, shape = 4 (default)  
-#' 2. Calculate benefit Bi = pi - p0  
-#' 3. Average across experts  
-#' 4. Sum over all ecological groups to get total benefit value for each strategy  
-#' 5. Calculate cost-effectiveness CEi = (Bi * Fi)/Ci  
-#' 
-#' Code not copied directly as data frames for this project are structured differently and wanted to avoid additional rearranging.  
+This code is used to run the uncertainty analysis using the confidence bounds from experts' benefit estimates.
 
-#' Load packages
-#+ message = FALSE, warning = FALSE
+Based on algorithm of R code written by Danial Stratford (<danial.stratford@csiro.au>), found in PTM Handbook Supporting Info.
+For each MC iteration,
+1. Sample performance value for each expert - ecological group - strategy using rpert from mc2d package, shape = 4 (default)
+2. Calculate benefit Bi = pi - p0
+3. Average across experts
+4. Sum over all ecological groups to get total benefit value for each strategy
+5. Calculate cost-effectiveness CEi = (Bi \* Fi)/Ci
+
+Code not copied directly as data frames for this project are structured differently and wanted to avoid additional rearranging.
+Load packages
+
+``` r
 library(mc2d)
 library(tidyverse)
 library(cowplot)
 
 MC <-  100 # number of iterations
 a <- 1000000 # scaling for CE scores
+```
 
-#' ## Prepare data for sampling
-#' Code copied from *createBoxplots.R*, with minimal changes to accommodate the absence of some tables in the Environment
-#+ warning = FALSE, message = FALSE
+Prepare data for sampling
+-------------------------
 
+Code copied from *createBoxplots.R*, with minimal changes to accommodate the absence of some tables in the Environment
+
+``` r
 # Read in data from benefits aggregation. 
 rlong.std <- read_csv("Standardized_Estimates_Longrev.csv") # use read_csv to make sure factors read in as character
 
@@ -64,16 +65,21 @@ spcases$Strategy <- factor(spcases$Strategy, levels = strat.levels)
 spcases$Expert <- factor(spcases$Expert, levels = levels(rlong.std.wide$Expert))
 spcases$`Ecological Group`<- factor(spcases$`Ecological Group`, levels = grp.levels)
 names(spcases)[which(str_detect(names(spcases), "Ecological Group")==1)] <- "Ecological.Group"  
+```
 
-#' Read in Cost & Feasibility table
-#+ warning = FALSE, message = FALSE
+Read in Cost & Feasibility table
+
+``` r
 costfeas <- read_csv("CostFeas2.csv") 
 costfeas <- costfeas[-1,] # Remove baseline values
 # costfeas$Strategy <- as.character(costfeas$Strategy)
 # costfeas$Strategy <- as_factor(costfeas$Strategy)
 costfeas$Strategy <- factor(costfeas$Strategy, levels = strat.levels)
+```
 
-#' Calculate cost and feasibility values for new combinations --------------
+Calculate cost and feasibility values for new combinations --------------
+
+``` r
 # This section is specfic to SJR and can be deleted for future projects
 
 combos <- as.character(costfeas$Strategy[17:length(costfeas$Strategy)])
@@ -96,9 +102,12 @@ costfeas$Feasibility[which(costfeas$Strategy == "S22")] <- S22.feas
 newstrat.levels <- levels(costfeas$Strategy)
 
 # comment out above section if not needed ---
+```
 
-#' ## Do uncertainty analysis
-#+ warning = FALSE, message = FALSE
+Do uncertainty analysis
+-----------------------
+
+``` r
 samples <- matrix(nrow = nrow(rlong.std.wide),ncol = MC)
 MC.CE_Score <- list()
 Benefits_uncrtn <- list()
@@ -241,14 +250,20 @@ MC.CE_Table <- lapply(MC.CE_Score, "[", 1:length(strat.est$Strategy), "CE")
 MC.Results <- matrix(unlist(MC.CE_Table), ncol = MC, byrow = FALSE)
 MC.Results <- data.frame(strat.est$Strategy[1:length(strat.est$Strategy)], MC.Results)
 names(MC.Results)[1] <- "Strategy"
+```
 
-#' Save results
+Save results
+
+``` r
 write_csv(MC.Results, "MC_CEScores2.csv")
 MC_Samples <- data.frame(rlong.std.wide[,1:3], samples)
 write_csv(MC_Samples, "MC_PerfSamples2.csv")
 saveRDS(Benefits_uncrtn, "Benefits_uncrtn.rds")
+```
 
-#' Box plots for visualization
+Box plots for visualization
+
+``` r
 MC.CE <- gather(MC.Results, key = MC.Iter, value = CE, 2:ncol(MC.Results))
 # MC.CE$Strategy <- factor(MC.CE$Strategy, levels = unique(MC.CE$Strategy))
 
@@ -291,3 +306,8 @@ temp.plot <-
   ylim(0, 200) # set the y-axis limits from 0-100
 
 print(temp.plot)
+```
+
+    ## Warning: Removed 50 rows containing non-finite values (stat_boxplot).
+
+![](Sens_Analysis_files/figure-markdown_github/unnamed-chunk-7-1.png)
