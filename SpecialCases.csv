@@ -22,29 +22,29 @@ Expert,Ecological Group,Strategy,NumSppScored
 1,Migratory Fish,20,1
 1,Migratory Fish,21,1
 1,Migratory Fish,22,1
-5,Grassland or Open Habitat Species,Baseline,1
-5,Grassland or Open Habitat Species,1,1
-5,Grassland or Open Habitat Species,2,1
-5,Grassland or Open Habitat Species,3,1
-5,Grassland or Open Habitat Species,4,1
-5,Grassland or Open Habitat Species,5,1
-5,Grassland or Open Habitat Species,6,1
-5,Grassland or Open Habitat Species,7,1
-5,Grassland or Open Habitat Species,8,1
-5,Grassland or Open Habitat Species,9,1
-5,Grassland or Open Habitat Species,10,1
-5,Grassland or Open Habitat Species,11,1
-5,Grassland or Open Habitat Species,12,1
-5,Grassland or Open Habitat Species,13,1
-5,Grassland or Open Habitat Species,14,1
-5,Grassland or Open Habitat Species,15,1
-5,Grassland or Open Habitat Species,16,1
-5,Grassland or Open Habitat Species,17,1
-5,Grassland or Open Habitat Species,18,1
-5,Grassland or Open Habitat Species,19,1
-5,Grassland or Open Habitat Species,20,1
-5,Grassland or Open Habitat Species,21,1
-5,Grassland or Open Habitat Species,22,1
+5,"Grassland, Open, or Agricult Assoc",Baseline,1
+5,"Grassland, Open, or Agricult Assoc",1,1
+5,"Grassland, Open, or Agricult Assoc",2,1
+5,"Grassland, Open, or Agricult Assoc",3,1
+5,"Grassland, Open, or Agricult Assoc",4,1
+5,"Grassland, Open, or Agricult Assoc",5,1
+5,"Grassland, Open, or Agricult Assoc",6,1
+5,"Grassland, Open, or Agricult Assoc",7,1
+5,"Grassland, Open, or Agricult Assoc",8,1
+5,"Grassland, Open, or Agricult Assoc",9,1
+5,"Grassland, Open, or Agricult Assoc",10,1
+5,"Grassland, Open, or Agricult Assoc",11,1
+5,"Grassland, Open, or Agricult Assoc",12,1
+5,"Grassland, Open, or Agricult Assoc",13,1
+5,"Grassland, Open, or Agricult Assoc",14,1
+5,"Grassland, Open, or Agricult Assoc",15,1
+5,"Grassland, Open, or Agricult Assoc",16,1
+5,"Grassland, Open, or Agricult Assoc",17,1
+5,"Grassland, Open, or Agricult Assoc",18,1
+5,"Grassland, Open, or Agricult Assoc",19,1
+5,"Grassland, Open, or Agricult Assoc",20,1
+5,"Grassland, Open, or Agricult Assoc",21,1
+5,"Grassland, Open, or Agricult Assoc",22,1
 5,Wetland Species,Baseline,2
 5,Wetland Species,1,2
 5,Wetland Species,2,2
@@ -68,12 +68,12 @@ Expert,Ecological Group,Strategy,NumSppScored
 5,Wetland Species,20,2
 5,Wetland Species,21,2
 5,Wetland Species,22,2
-9,Grassland or Open Habitat Species,8,3
+9,"Grassland, Open, or Agricult Assoc",8,3
 9,Forest Openings and Young Forest Species,8,1
-9,Grassland or Open Habitat Species,13,1
-15,Grassland or Open Habitat Species,Baseline,1
-15,Grassland or Open Habitat Species,16,1
-15,Grassland or Open Habitat Species,22,1
+9,"Grassland, Open, or Agricult Assoc",13,1
+15,"Grassland, Open, or Agricult Assoc",Baseline,1
+15,"Grassland, Open, or Agricult Assoc",16,1
+15,"Grassland, Open, or Agricult Assoc",22,1
 16,Riparian Species,Baseline,3
 16,Riparian Species,1,3
 16,Riparian Species,2,3
@@ -97,52 +97,52 @@ Expert,Ecological Group,Strategy,NumSppScored
 16,Riparian Species,20,3
 16,Riparian Species,21,3
 16,Riparian Species,22,3
-16,Grassland or Open Habitat Species,Baseline,3
-16,Grassland or Open Habitat Species,1,3
-16,Grassland or Open Habitat Species,2,3
-16,Grassland or Open Habitat Species,3,3
-16,Grassland or Open Habitat Species,4,3
-16,Grassland or Open Habitat Species,5,3
-16,Grassland or Open Habitat Species,6,3
-16,Grassland or Open Habitat Species,7,3
-16,Grassland or Open Habitat Species,8,3
-16,Grassland or Open Habitat Species,9,3
-16,Grassland or Open Habitat Species,10,3
-16,Grassland or Open Habitat Species,11,3
-16,Grassland or Open Habitat Species,12,3
-16,Grassland or Open Habitat Species,13,3
-16,Grassland or Open Habitat Species,14,3
-16,Grassland or Open Habitat Species,15,3
-16,Grassland or Open Habitat Species,16,3
-16,Grassland or Open Habitat Species,17,3
-16,Grassland or Open Habitat Species,18,3
-16,Grassland or Open Habitat Species,19,3
-16,Grassland or Open Habitat Species,20,3
-16,Grassland or Open Habitat Species,21,3
-16,Grassland or Open Habitat Species,22,3
-18,Grassland or Open Habitat Species,Baseline,1
-18,Grassland or Open Habitat Species,1,1
-18,Grassland or Open Habitat Species,2,1
-18,Grassland or Open Habitat Species,3,1
-18,Grassland or Open Habitat Species,4,1
-18,Grassland or Open Habitat Species,5,1
-18,Grassland or Open Habitat Species,6,1
-18,Grassland or Open Habitat Species,7,1
-18,Grassland or Open Habitat Species,8,1
-18,Grassland or Open Habitat Species,9,1
-18,Grassland or Open Habitat Species,10,1
-18,Grassland or Open Habitat Species,11,1
-18,Grassland or Open Habitat Species,12,1
-18,Grassland or Open Habitat Species,13,1
-18,Grassland or Open Habitat Species,14,1
-18,Grassland or Open Habitat Species,15,1
-18,Grassland or Open Habitat Species,16,1
-18,Grassland or Open Habitat Species,17,1
-18,Grassland or Open Habitat Species,18,1
-18,Grassland or Open Habitat Species,19,1
-18,Grassland or Open Habitat Species,20,1
-18,Grassland or Open Habitat Species,21,1
-18,Grassland or Open Habitat Species,22,1
+16,"Grassland, Open, or Agricult Assoc",Baseline,3
+16,"Grassland, Open, or Agricult Assoc",1,3
+16,"Grassland, Open, or Agricult Assoc",2,3
+16,"Grassland, Open, or Agricult Assoc",3,3
+16,"Grassland, Open, or Agricult Assoc",4,3
+16,"Grassland, Open, or Agricult Assoc",5,3
+16,"Grassland, Open, or Agricult Assoc",6,3
+16,"Grassland, Open, or Agricult Assoc",7,3
+16,"Grassland, Open, or Agricult Assoc",8,3
+16,"Grassland, Open, or Agricult Assoc",9,3
+16,"Grassland, Open, or Agricult Assoc",10,3
+16,"Grassland, Open, or Agricult Assoc",11,3
+16,"Grassland, Open, or Agricult Assoc",12,3
+16,"Grassland, Open, or Agricult Assoc",13,3
+16,"Grassland, Open, or Agricult Assoc",14,3
+16,"Grassland, Open, or Agricult Assoc",15,3
+16,"Grassland, Open, or Agricult Assoc",16,3
+16,"Grassland, Open, or Agricult Assoc",17,3
+16,"Grassland, Open, or Agricult Assoc",18,3
+16,"Grassland, Open, or Agricult Assoc",19,3
+16,"Grassland, Open, or Agricult Assoc",20,3
+16,"Grassland, Open, or Agricult Assoc",21,3
+16,"Grassland, Open, or Agricult Assoc",22,3
+18,"Grassland, Open, or Agricult Assoc",Baseline,1
+18,"Grassland, Open, or Agricult Assoc",1,1
+18,"Grassland, Open, or Agricult Assoc",2,1
+18,"Grassland, Open, or Agricult Assoc",3,1
+18,"Grassland, Open, or Agricult Assoc",4,1
+18,"Grassland, Open, or Agricult Assoc",5,1
+18,"Grassland, Open, or Agricult Assoc",6,1
+18,"Grassland, Open, or Agricult Assoc",7,1
+18,"Grassland, Open, or Agricult Assoc",8,1
+18,"Grassland, Open, or Agricult Assoc",9,1
+18,"Grassland, Open, or Agricult Assoc",10,1
+18,"Grassland, Open, or Agricult Assoc",11,1
+18,"Grassland, Open, or Agricult Assoc",12,1
+18,"Grassland, Open, or Agricult Assoc",13,1
+18,"Grassland, Open, or Agricult Assoc",14,1
+18,"Grassland, Open, or Agricult Assoc",15,1
+18,"Grassland, Open, or Agricult Assoc",16,1
+18,"Grassland, Open, or Agricult Assoc",17,1
+18,"Grassland, Open, or Agricult Assoc",18,1
+18,"Grassland, Open, or Agricult Assoc",19,1
+18,"Grassland, Open, or Agricult Assoc",20,1
+18,"Grassland, Open, or Agricult Assoc",21,1
+18,"Grassland, Open, or Agricult Assoc",22,1
 18,Wetland Species,Baseline,2
 18,Wetland Species,1,2
 18,Wetland Species,2,2

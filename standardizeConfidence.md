@@ -3,7 +3,12 @@ Standardize Benefit Estimates
 Adapted for the SJR PTM by Abbey Camaclang
 28 June 2019
 
-This script standardizes the benefit estimates and saves results tables as .csv files: 1) **Results\_tidy.csv** - Tidy (long) version of the original **Results.csv** file 2) **Estimates\_per\_group.csv** - Number of expert estimates for each ecological group 3) **Estimates\_by\_strategy.csv** - Number of expert estimates there are for each strategy+group 4) **Standardized\_Estimates\_Wide.csv** - Standardized estimates in same table format as Results.csv 5) **Standardized\_Estimates\_Long.csv** - Tidy version of Standardized estimates - for use in plotting
+This script standardizes the benefit estimates and saves results tables as .csv files:
+1) **Results\_tidy.csv** - Tidy (long) version of the original **Results.csv** file
+2) **Estimates\_per\_group.csv** - Number of expert estimates for each ecological group
+3) **Estimates\_by\_strategy.csv** - Number of expert estimates there are for each strategy x group
+4) **Standardized\_Estimates\_Wide.csv** - Standardized estimates in same table format as Results.csv
+5) **Standardized\_Estimates\_Long.csv** - Tidy version of Standardized estimates - for use in plotting
 
 It requires output from *combineTables.R*, which organizes the estimates into a single table and saves it as **Results.csv** in the current working directory.
 
@@ -18,7 +23,7 @@ Read in and tidy data
 ---------------------
 
 ``` r
-results <- read.csv("Results_rev.csv")
+results <- read.csv("Results.csv")
 # head(results)
 ```
 
@@ -38,12 +43,12 @@ head(rlong)
     ## 2      1                   Riparian Species Best.guess    NA
     ## 3      1                    Aquatic Species Best.guess    NA
     ## 4      1                    Wetland Species Best.guess    NA
-    ## 5      1  Grassland or Open Habitat Species Best.guess    NA
+    ## 5      1 Grassland, Open, or Agricult Assoc Best.guess    NA
     ## 6      1 Mature Forest and Peatland Species Best.guess    NA
 
 ``` r
 rlong <- na.omit(rlong)
-write_csv(rlong, "Results_tidyrev.csv")
+write_csv(rlong, "Results_tidy.csv")
 
 rlong$Value <- as.numeric((rlong$Value))
 # str(rlong) # Check data type
@@ -58,7 +63,7 @@ Tabulate how many expert estimates there are for each ecological group
 table.data <-spread(rlong, Estimate, Value) 
 table.subset <- table.data[, c(1, 2)] # Subset table.data to only include the columns "Expert" and "Ecological.Group"
 exp.table <- table(table.subset$Ecological.Group)
-write.csv(exp.table, "Estimates_per_group_rev.csv", row.names=FALSE)
+write.csv(exp.table, "Estimates_per_group.csv", row.names=FALSE)
 exp.table
 ```
 
@@ -71,7 +76,7 @@ exp.table
     ##                                       10 
     ##                             Forest Trees 
     ##                                        8 
-    ##        Grassland or Open Habitat Species 
+    ##       Grassland, Open, or Agricult Assoc 
     ##                                       13 
     ##       Mature Forest and Peatland Species 
     ##                                        8 
@@ -107,7 +112,7 @@ table.subset2 <- subset(rlong, Est.Type=="Best.Guess") # Subset to count how man
 strat.levels <- unique(table.subset2$Strategy)
 table.subset2$Strategy <- factor(table.subset2$Strategy,levels = strat.levels) #' <!-- AC: Note that using as.factor() changes the order to alphabetical -->
 st.table <- table(table.subset2$Ecological.Group, table.subset2$Strategy)
-write.csv(st.table, "Estimates_by_strategy_rev.csv")
+write.csv(st.table, "Estimates_by_strategy.csv")
 st.table
 ```
 
@@ -117,7 +122,7 @@ st.table
     ##   Bats                                           10 10 10  9  9  9  9  9
     ##   Forest Openings and Young Forest Species       10 10 10 10 10 10 10 10
     ##   Forest Trees                                    8  8  8  8  8  8  8  8
-    ##   Grassland or Open Habitat Species              13 12 12 12 12 12 12 12
+    ##   Grassland, Open, or Agricult Assoc             13 12 12 12 12 12 12 12
     ##   Mature Forest and Peatland Species              8  8  8  8  8  8  8  8
     ##   Migratory Fish                                 12 12 12 12 12 12 12 12
     ##   Riparian Species                               12 12 11 12 10 12 11 12
@@ -128,7 +133,7 @@ st.table
     ##   Bats                                      9  9   8  10   8   9   9   9
     ##   Forest Openings and Young Forest Species 10 10   9   9   9  10  10   9
     ##   Forest Trees                              8  8   7   7   8   8   8   8
-    ##   Grassland or Open Habitat Species        12 12  11  11  11  12  12  12
+    ##   Grassland, Open, or Agricult Assoc       12 12  11  11  11  12  12  12
     ##   Mature Forest and Peatland Species        8  8   7   7   7   8   8   8
     ##   Migratory Fish                           12 12  12  10   9  12  11  11
     ##   Riparian Species                         11 12  11  10  10  12  11  11
@@ -139,7 +144,7 @@ st.table
     ##   Bats                                       9   9   8   8   7   9   9
     ##   Forest Openings and Young Forest Species  10   9   9   9   8   9   9
     ##   Forest Trees                               8   7   7   7   6   6   6
-    ##   Grassland or Open Habitat Species         13  11  11  11  10  11  12
+    ##   Grassland, Open, or Agricult Assoc        13  11  11  11  10  11  12
     ##   Mature Forest and Peatland Species         8   7   7   7   6   7   7
     ##   Migratory Fish                            12  11  11  11  11  10  12
     ##   Riparian Species                          12  11  11  11  10  11  11
@@ -217,6 +222,6 @@ rlong.wide$Ecological.Group<-factor(rlong.wide$Ecological.Group, levels=grp.leve
 rlong.wide <- with(rlong.wide, rlong.wide[order(Expert, Ecological.Group),]) 
 
 # Output results
-write_csv(rlong.wide, "Standardized_Estimates_Widerev.csv") 
-write_csv(rlong.std, "Standardized_Estimates_Longrev.csv")
+write_csv(rlong.wide, "Standardized_Estimates_Wide.csv") 
+write_csv(rlong.std, "Standardized_Estimates_Long.csv")
 ```

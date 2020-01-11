@@ -7,59 +7,25 @@ This code weights benefits by feasibility, recalculates expected performance bas
 
 Requires **Aggregated\_Benefits.csv** and **Aggregated\_Baseline.csv** from *aggregateEstimates.R*, and a **CostFeas** table of strategy costs and feasibilities
 
+Load package
+
 ``` r
 library(tidyverse)
 ```
 
-Use results from *aggregateEstimates.R*
+Read in data tables
 
 ``` r
-ben.mat.agg <- read_csv("Aggregated_Benefits_Newcombos.csv")
-base.mat.agg <- read_csv("Aggregated_Baseline_rev.csv")
-```
+ben.mat.agg <- read_csv("Aggregated_Benefits.csv")
+base.mat.agg <- read_csv("Aggregated_Baseline.csv")
 
-Create table of Cost and Feasibility if needed for TESTING purposes
-
-``` r
-# feas <- c(1, runif(22, min = 0.5, max = 0.95))
-# cost <- c(0, runif(22, min = 1000000, max = 400000000))
-# Strategy <- c("Baseline", paste0("S", seq(1:22)))
-# costfeas <- as.data.frame(cbind(cost, feas))
-# names(costfeas)<- c("Cost", "Feasibility")
-# costfeas <- cbind(Strategy, costfeas)
-# write_csv(costfeas, "sample_CostFeas.csv")
-```
-
-Read in Cost & Feasibility table
-
-``` r
-costfeas <- read_csv("CostFeas2_Newcombos.csv") # sample file created by above code
-
-print(costfeas)
-```
-
-    ## # A tibble: 24 x 3
-    ##    Strategy        Cost Feasibility
-    ##    <chr>          <dbl>       <dbl>
-    ##  1 Baseline          0         1   
-    ##  2 S1         10511312.        0.85
-    ##  3 S2          2701839.        0.92
-    ##  4 S3         25998803.        0.62
-    ##  5 S4         21370039.        0.53
-    ##  6 S5        136569591.        0.54
-    ##  7 S6       2236723608.        0.41
-    ##  8 S7         15466505.        0.45
-    ##  9 S8          4129505.        0.52
-    ## 10 S9         12635565.        0.52
-    ## # ... with 14 more rows
-
-``` r
+costfeas <- read_csv("CostFeas.csv")
 costfeas <- costfeas[-1,] # Remove baseline values
-costfeas$Strategy <- as.character(costfeas$Strategy)
 costfeas$Strategy <- as_factor(costfeas$Strategy)
 ```
 
-Calculate the expected benefits (weighted by feasibility)
+Calculate the expected benefits
+-------------------------------
 
 ``` r
 # Tidy data
@@ -80,10 +46,11 @@ joined.wide <- joined.data %>%
 est.levels <- unique(joined.data$Estimate)
 joined.wide <- joined.wide[, c("Ecological.Group", est.levels)] # rearranges columns so strategies are in the correct order
 
-write_csv(joined.wide, "Aggregated_Benefits_weighted.csv")
+write_csv(joined.wide, "Expected_Benefits.csv")
 ```
 
-Calculate expected performance based on weighted benefit estimates
+Calculate expected performance
+------------------------------
 
 ``` r
 # Join with baseline estimates to make sure the observations (Ecol. groups) line up correctly
@@ -96,30 +63,31 @@ perf.mat <- joinedbase.wide[,5:ncol(joinedbase.wide)] + as.matrix(base.mat)
 perf.mat <- cbind(joinedbase.wide$Ecological.Group,base.mat,perf.mat)
 names(perf.mat)[1] <- "Ecological.Group"
 
-write_csv(perf.mat, "Aggregated_Performance_weighted.csv")
+write_csv(perf.mat, "Expected_Performance.csv") # was aggregated_performance_weighted
 ```
 
-Generate (weighted) benefits matrix for optimization
+Create expected performance matrix for complementarity analysis (optimization) and uncertainty analysis
 
 ``` r
+# Best guess (most likely) estimates
 wt.ben <- perf.mat %>%
-  select(., c(Ecological.Group, contains("Best.guess"))) # select only Best Guess estimates from perf.mat
+  select(., c(Ecological.Group, contains("Best.guess"))) 
 wt.ben.t <- data.frame(t(wt.ben[,-1]))
-names(wt.ben.t) <- wt.ben$Ecological.Group # column names
+names(wt.ben.t) <- wt.ben$Ecological.Group 
 
-# Also get upper and lower values for uncertainty analysis
+# Lower (most pessimistic)
 wt.ben.low <- perf.mat %>%
-  select(., c(Ecological.Group, contains("Lower"))) # select only Best Guess estimates from perf.mat
+  select(., c(Ecological.Group, contains("Lower"))) 
 wt.ben.low.t <- data.frame(t(wt.ben.low[,-1]))
-names(wt.ben.low.t) <- wt.ben.low$Ecological.Group # column names
+names(wt.ben.low.t) <- wt.ben.low$Ecological.Group 
 
+# Upper (most optimistic)
 wt.ben.hi <- perf.mat %>%
-  select(., c(Ecological.Group, contains("Upper"))) # select only Best Guess estimates from perf.mat
+  select(., c(Ecological.Group, contains("Upper"))) 
 wt.ben.hi.t <- data.frame(t(wt.ben.hi[,-1]))
-names(wt.ben.hi.t) <- wt.ben.hi$Ecological.Group # column names
+names(wt.ben.hi.t) <- wt.ben.hi$Ecological.Group 
 
-
-# Create vector of strategy names to add to the table
+# Create vector of strategy names to add to the tables
 strat.names <- vector()
 strat.names[which(str_detect(rownames(wt.ben.t), "(?<=_)[:digit:]+")==1)] <- 
   paste0("S",str_extract(rownames(wt.ben.t)[which(str_detect(rownames(wt.ben.t), "(?<=_)[:digit:]+")==1)], "(?<=_)[:digit:]+"))
@@ -129,14 +97,13 @@ strat.names[which(str_detect(rownames(wt.ben.t), "(?<=_)[:digit:]+")==0)] <-
 wt.ben.t <- cbind(strat.names,wt.ben.t)
 names(wt.ben.t)[1] <- "Strategy"
 
-# print(wt.ben.t, row.names = FALSE)
-
 wt.ben.low.t <- cbind(strat.names, wt.ben.low.t)
 names(wt.ben.low.t)[1] <- "Strategy"
 
 wt.ben.hi.t <- cbind(strat.names, wt.ben.hi.t)
 names(wt.ben.hi.t)[1] <- "Strategy"
 
+# Output new tables
 write_csv(wt.ben.t, "Benefits.csv") # use this table for the complementarity analysis
 write_csv(wt.ben.low.t, "Lower.csv")
 write_csv(wt.ben.hi.t, "Upper.csv")

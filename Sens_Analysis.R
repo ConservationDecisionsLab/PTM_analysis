@@ -22,82 +22,116 @@
 library(mc2d)
 library(tidyverse)
 library(cowplot)
+library(ggridges)
 
-MC <-  100 # number of iterations
+MC <-  10000 # number of iterations
 a <- 1000000 # scaling for CE scores
 
 #' ## Prepare data for sampling
-#' Code copied from *createBoxplots.R*, with minimal changes to accommodate the absence of some tables in the Environment
 #+ warning = FALSE, message = FALSE
+costfeas <- read_csv("CostFeas.csv") 
+costfeas$Strategy <- as_factor(costfeas$Strategy)
+costfeas <- costfeas[-1,] # Remove baseline values
 
-# Read in data from benefits aggregation. 
-rlong.std <- read_csv("Standardized_Estimates_Longrev.csv") # use read_csv to make sure factors read in as character
+rlong.std <- read_csv("Standardized_Estimates_Long.csv") # use read_csv to make sure factors read in as character
 
 # Specify factor levels
-strat.levels <- unique(rlong.std$Strategy)
 grp.levels <- unique(rlong.std$Ecological.Group)
-est.levels <- c("Lower", "Best.Guess", "Upper")
 expcode <- unique(rlong.std$Expert) 
 
-# Order the strategies 
-rlong.std$Strategy <- factor(rlong.std$Strategy, levels = strat.levels)
+newstrat.levels <- levels(costfeas$Strategy)
+rlong.std$Strategy <- factor(rlong.std$Strategy, levels = newstrat.levels)
 
-rlong.std <- subset(rlong.std, Est.Type %in% c("Best.Guess", "Lower", "Upper"))
+est.levels <- c("Lower", "Best.Guess", "Upper")
+rlong.std <- subset(rlong.std, Est.Type %in% c("Best.Guess", "Lower", "Upper")) #remove entries for 'Confidence'
 rlong.std$Est.Type <- factor(rlong.std$Est.Type, levels = est.levels)
 
 # Rearrange table so estimates for each group * strategy are on the same row
 rlong.sub2 <- rlong.std[,c(1,2,5,6,7)]
-rlong.std.wide <- spread(rlong.sub2,key=Est.Type,value=St.Value)
-rlong.std.wide$Expert<-as.factor(rlong.std.wide$Expert)
+rlong.std.wide <- spread(rlong.sub2, key = Est.Type, value = St.Value)
+rlong.std.wide$Expert <- as.factor(rlong.std.wide$Expert)
 rlong.std.wide$Ecological.Group <- factor(rlong.std.wide$Ecological.Group, levels = grp.levels)
 
 # Get number of species in each group and number of species scored by each expert for each strategy
 grplist <- read_csv("EcolGroupsList.csv") # Table of species in each ecological group
 numspp <- apply(grplist, MARGIN = 2, FUN = function(x) length(x[!is.na(x)]) )
-grpwts <- data.frame(Ecological.Group=names(numspp), numspp) 
+
+grpwts <- data.frame(Ecological.Group = names(numspp), numspp) 
 grpwts$Ecological.Group <- factor(grpwts$Ecological.Group, levels = grp.levels)
 
 spcases <- read_csv("SpecialCases.csv") # Table of number of species in each group scored by individual experts (if different from total)
 spcases$Strategy <- str_c("S", spcases$Strategy)
 spcases$Strategy[which(spcases$Strategy == "SBaseline")] <- "Baseline"
-spcases$Strategy <- factor(spcases$Strategy, levels = strat.levels)
+spcases$Strategy <- factor(spcases$Strategy, levels = newstrat.levels)
 spcases$Expert <- factor(spcases$Expert, levels = levels(rlong.std.wide$Expert))
 spcases$`Ecological Group`<- factor(spcases$`Ecological Group`, levels = grp.levels)
-names(spcases)[which(str_detect(names(spcases), "Ecological Group")==1)] <- "Ecological.Group"  
+names(spcases)[which(str_detect(names(spcases), "Ecological Group") == 1)] <- "Ecological.Group"  
 
-#' Read in Cost & Feasibility table
-#+ warning = FALSE, message = FALSE
-costfeas <- read_csv("CostFeas2.csv") 
-costfeas <- costfeas[-1,] # Remove baseline values
-# costfeas$Strategy <- as.character(costfeas$Strategy)
-# costfeas$Strategy <- as_factor(costfeas$Strategy)
-costfeas$Strategy <- factor(costfeas$Strategy, levels = strat.levels)
+#' ## Derive new S22 estimates
+#' For SJR PTM only  
+#' 
+#' Rename S22 as S23 and calculate new S22
+temp.table <- filter(rlong.std.wide, Strategy %in% c("S5", "S6", "S22")) %>%
+  gather(`Lower`, `Best.Guess`, `Upper`, key = Type, value = Estimate) %>%
+  spread(key = Strategy, value = Estimate) %>%
+  rename(S23 = S22) %>%
+  mutate(Diff = S6 - S5, S22 = S23 - Diff) 
+ 
+S23.table <- select(temp.table, Expert, Ecological.Group, Type, S23) %>%
+  spread(key = Type, value = S23) %>%
+  mutate(Strategy = "S23") %>%
+  select(Expert, Ecological.Group, Strategy, Lower, Best.Guess, Upper)
+S23.table$Strategy <- factor(S23.table$Strategy, levels = newstrat.levels)
 
-#' Calculate cost and feasibility values for new combinations --------------
-# This section is specfic to SJR and can be deleted for future projects
+new.S22 <- select(temp.table, Expert, Ecological.Group, Type, S22) %>%
+  spread(key = Type, value = S22) %>%
+  mutate(Strategy = "S22") %>%
+  select(Expert, Ecological.Group, Strategy, Lower, Best.Guess, Upper) %>%
+  gather(`Lower`, `Best.Guess`, `Upper`, key = Type, value = Estimate)
 
-combos <- as.character(costfeas$Strategy[17:length(costfeas$Strategy)])
+#' Ensure that new S22 estimates are > or = to the max estimates of component strategies (i.e., S1 - S5 and S7 - S21)
+# Get max estimates of component strategies (i.e., S1-S5 and S7 - S21)
+compstrat <- filter(rlong.std.wide, !Strategy %in% c("S6", "S22"))
+grouped <- group_by(compstrat, Expert, Ecological.Group) %>%
+  filter(Best.Guess == max(Best.Guess)) %>%
+  filter(Lower == max(Lower)) %>%
+  filter(Upper == max(Upper)) %>%
+  slice(which.max(Best.Guess)) %>%
+  gather(`Lower`, `Best.Guess`, `Upper`, key = Type, value = Estimate)
 
-S22.exc <- c("Baseline", "S6", combos)
-S22.feas <- mean(costfeas$Feasibility[!costfeas$Strategy %in% S22.exc])
-S22.cost <- costfeas$Cost[which(costfeas$Strategy == "S22")] - costfeas$Cost[which(costfeas$Strategy == "S6")]
+# Compare max estimates to new S22 estimates and use the higher value
+joined <- full_join(grouped, new.S22, by = c("Expert", "Ecological.Group", "Type")) %>%
+  rename(S22 = Estimate.y, Other = Estimate.x) %>%
+  select(Expert, Ecological.Group, Type, Other, S22) %>%  # remove unnecessary columns
+  gather(Other, S22, key = Strategy, value = Estimate) %>%
+  arrange(Expert, Ecological.Group) %>% # re-order rows
+  spread(key = Type, value = Estimate) %>%
+  filter(Best.Guess == max(Best.Guess)) %>% # get the maximum of the values for each expert * ecological group
+  gather(Best.Guess, Lower, Upper, key = Type, value = Estimate) %>%
+  spread(key = Strategy, value = Estimate)
 
-S23.exc <- c("Baseline", "S5", combos)
-S23.feas <- mean(costfeas$Feasibility[!costfeas$Strategy %in% S23.exc])
-S23.cost <- costfeas$Cost[which(costfeas$Strategy == "S22")] - costfeas$Cost[which(costfeas$Strategy == "S5")]
+joined$S22[which(is.na(joined$S22))] <- joined$Other[which(is.na(joined$S22))]
 
-# Add new cost/feasibility values to costfeas:
-costfeas <- costfeas %>%
-  add_row(Strategy = "S23", Cost = S23.cost, Feasibility = S23.feas)
-costfeas$Cost[which(costfeas$Strategy == "S22")] <- S22.cost
-costfeas$Feasibility[which(costfeas$Strategy == "S22")] <- S22.feas
+# Extract updated S22 values
+S22.table <- select(joined, -Other) %>%
+  spread(key = Type, value = S22) %>%
+  mutate(Strategy = "S22") %>%
+  select(Expert, Ecological.Group, Strategy, Lower, Best.Guess, Upper) #need to change Strategy into factor
+S22.table$Strategy <- factor(S22.table$Strategy, levels = newstrat.levels)
 
-# get new strat.levels
-newstrat.levels <- levels(costfeas$Strategy)
+# Constrain new estimates to 0-100 range
+S22.table$Lower[which(S22.table$Lower < 0)] <- 0
+S22.table$Upper[which(S22.table$Upper > 100)] <- 100
 
-# comment out above section if not needed ---
+#' Update table with new estimates
+rlong.std.wide.orig <- rlong.std.wide # store original version first, just in case
 
-#' ## Do uncertainty analysis
+rlong.std.wide$Strategy<-factor(rlong.std.wide$Strategy, levels = newstrat.levels)
+rlong.std.wide <- filter(rlong.std.wide, Strategy != "S22") # remove old S22 estimates from table
+rlong.std.wide <- bind_rows(rlong.std.wide, S22.table, S23.table) %>% # add new S22 estimates and S23 estimates
+  arrange(Expert, Ecological.Group, Strategy)  
+
+#' ## Uncertainty analysis for benefit uncertainty
 #+ warning = FALSE, message = FALSE
 samples <- matrix(nrow = nrow(rlong.std.wide),ncol = MC)
 MC.CE_Score <- list()
@@ -117,13 +151,14 @@ for(it in 1:MC){
   names(temp)[4] <- "MC.Value"
   
   temp.wide <- spread(temp, key = Strategy, value = MC.Value)
-  temp.strat <- select(temp.wide, as.character(strat.levels[2]):as.character(strat.levels[length(strat.levels)])) 
+  temp.strat <- select(temp.wide, as.character(newstrat.levels[2]):as.character(newstrat.levels[length(newstrat.levels)])) 
   
   temp.ben <- temp.strat - temp.wide$Baseline
-  # temp.ben[temp.ben<0] <- 0 # replaces negative values with 0 (assume same as baseline)
+  temp.ben[temp.ben<0] <- 0 # replaces negative values with 0 (assume same as baseline)
   temp.ben <- cbind(temp.wide[,1:2], temp.ben) 
   
   temp.long <- gather(temp.ben, key = Strategy, value = MCValue, -c(1:2))
+  temp.long$Strategy <- factor(temp.long$Strategy, levels = newstrat.levels)
   
   # Combine tables to calculate weights for each expert - group - strategy 
   temp.joined <- left_join(temp.long, spcases, by=c("Expert", "Ecological.Group", "Strategy")) %>%
@@ -138,7 +173,7 @@ for(it in 1:MC){
     left_join(., fullwts, by = c("Ecological.Group", "Strategy")) %>%
     mutate(Wts = NumSppScored/x) %>%
     mutate(Wt.MCValue = MCValue*Wts)
-  temp.joined$Strategy <- factor(temp.joined$Strategy, levels = strat.levels)
+  temp.joined$Strategy <- factor(temp.joined$Strategy, levels = newstrat.levels)
   
   # Aggregate across experts
   temp.agg <- aggregate(temp.joined$Wt.MCValue, 
@@ -148,36 +183,32 @@ for(it in 1:MC){
   # Weight benefits by number of species in group
   wt.temp.agg <- left_join(temp.agg, grpwts, by = "Ecological.Group") %>%
     mutate(Wt.Benefit = x*numspp)    
- 
   
-  # Calculate benefit values for new combinations -----------------------------------
-  # This section is specific to SJR and can be deleted for future projects
-  
-  S6.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S6"]
-  S5.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S5"]
-  SAll.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S22"]
-  
-  S6.wt.fishben <- S6.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S6")]
-  S5.wt.fishben <- S5.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S5")]
-  SAll.wt.fishben <- SAll.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S22")]
-  
-  S22.wtben <- SAll.wt.fishben - (S6.wt.fishben - S5.wt.fishben)
-  S22.ben <- S22.wtben/costfeas$Feasibility[which(costfeas$Strategy == "S22")] # unweight
-  
-  # Copy old S22 values as S23:
-  S23 <- wt.temp.agg[which(wt.temp.agg$Strategy == "S22"),]
-  S23$Strategy <- "S23"
-  rownames(S23) <- c(199:(199+8))
-  
-  # Replace old S22 migratory fish values with new ones, then add new S23 values
-  wt.temp.agg$Wt.Benefit[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")] <- S22.ben
-  fish.numspp <- wt.temp.agg$numspp[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")]
-  wt.temp.agg$x[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")] <- S22.ben/fish.numspp
-  wt.temp.agg <- rbind(wt.temp.agg, S23) # new values (unweighted by feasibility) one for each ecol group and strategy. Use for getting new benefit matri
-  
-  # strat.levels <- newstrat.levels
-
-  # comment out above section if not needed ---
+  # ----------------------------------------------------------------------------------------------------------------
+  # Calculate benefit values of new combinations for Migratory Fish only (for SJR PTM only!)
+  # 
+  # S6.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S6"]
+  # S5.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S5"]
+  # SAll.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S22"]
+  # 
+  # S6.wt.fishben <- S6.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S6")]
+  # S5.wt.fishben <- S5.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S5")]
+  # SAll.wt.fishben <- SAll.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S22")]
+  # 
+  # S22.wtben <- SAll.wt.fishben - (S6.wt.fishben - S5.wt.fishben)
+  # S22.ben <- S22.wtben/costfeas$Feasibility[which(costfeas$Strategy == "S22")] # unweight
+  # 
+  # # Copy old S22 values as S23:
+  # S23 <- wt.temp.agg[which(wt.temp.agg$Strategy == "S22"),]
+  # S23$Strategy <- "S23"
+  # rownames(S23) <- c(199:(199+8))
+  # 
+  # # Replace old S22 migratory fish values with new ones, then add new S23 values
+  # wt.temp.agg$Wt.Benefit[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")] <- S22.ben
+  # fish.numspp <- wt.temp.agg$numspp[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")]
+  # wt.temp.agg$x[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")] <- S22.ben/fish.numspp
+  # wt.temp.agg <- rbind(wt.temp.agg, S23) # new values (unweighted by feasibility) one for each ecol group and strategy. Use for getting new benefit matri
+  # ------------------------------------end section-------------------------------------------------------------------
   
   # Calculate total benefit of each strategy across ecological groups
   # First rearrange so strategies are in rows and ecol groups are in columns - basically need to end up with col vector of total benefit
@@ -185,7 +216,7 @@ for(it in 1:MC){
                        by = list(Strategy = wt.temp.agg$Strategy),
                        FUN = sum, na.rm = TRUE)
   names(sum.ben) <- c("Strategy", "Benefit")
-  sum.ben$Strategy <- as_factor(sum.ben$Strategy)
+  sum.ben$Strategy <- factor(sum.ben$Strategy, levels = newstrat.levels)
   
   # Join with cost/feasibility table and calculate cost-effectiveness
   strat.est <- left_join(sum.ben, costfeas, by="Strategy") %>%
@@ -211,6 +242,7 @@ for(it in 1:MC){
   # Aggregate baseline
   temp.base <- temp.wide[,1:3]
   temp.base$Strategy <- "Baseline"
+  temp.base$Strategy <- factor(temp.base$Strategy, levels = newstrat.levels)
   names(temp.base)[3] <- "MCValue"
   temp.base.joined <- left_join(temp.base, spcases, by=c("Expert", "Ecological.Group", "Strategy")) %>%
     left_join(., grpwts, by = "Ecological.Group")
@@ -237,57 +269,94 @@ for(it in 1:MC){
   
 }  
 
+#' Get results and save as .csv files
 MC.CE_Table <- lapply(MC.CE_Score, "[", 1:length(strat.est$Strategy), "CE")
 MC.Results <- matrix(unlist(MC.CE_Table), ncol = MC, byrow = FALSE)
 MC.Results <- data.frame(strat.est$Strategy[1:length(strat.est$Strategy)], MC.Results)
 names(MC.Results)[1] <- "Strategy"
 
-#' Save results
-write_csv(MC.Results, "MC_CEScores2.csv")
-MC_Samples <- data.frame(rlong.std.wide[,1:3], samples)
-write_csv(MC_Samples, "MC_PerfSamples2.csv")
-saveRDS(Benefits_uncrtn, "Benefits_uncrtn.rds")
+MC.CE_Rank <- lapply(MC.CE_Score, "[", 1:length(strat.est$Strategy), "CE_rank")
+MC.Ranks <- matrix(unlist(MC.CE_Rank), ncol = MC, byrow = FALSE)
+MC.Ranks <- data.frame(strat.est$Strategy[1:length(strat.est$Strategy)], MC.Ranks)
+names(MC.Ranks)[1] <- "Strategy"
 
-#' Box plots for visualization
+write_csv(MC.Results, "MC_CEScores_benefits_constr.csv")
+MC_Samples <- data.frame(rlong.std.wide[,1:3], samples)
+write_csv(MC_Samples, "MC_PerfSamples_benefits_constr.csv")
+saveRDS(Benefits_uncrtn, "Benefits_uncrtn_constr.rds") # if doing uncertainty analysis for the complementarity optimization
+
+#' Box plots of CE scores
 MC.CE <- gather(MC.Results, key = MC.Iter, value = CE, 2:ncol(MC.Results))
 # MC.CE$Strategy <- factor(MC.CE$Strategy, levels = unique(MC.CE$Strategy))
 
-strat.levels <- newstrat.levels
-
 temp.plot <-
   ggplot(MC.CE, aes(x = Strategy, # for each Ecological group, plot Estimate Type on x-axis 
-                           y = CE # and St.Value on y-axis, 
-                           ) # and colour the boxplots by estimate type
-  ) + 
-  geom_boxplot() + # tell R to display data in boxplot form
+                    y = CE # and St.Value on y-axis, 
+                    ) # and colour the boxplots by estimate type
+         ) + 
+  geom_boxplot(
+    lwd = 0.3 #lwd changes line width
+    , fatten = 1 # thickness of median line; default is 2
+    , outlier.size = 1 # size of outlier point
+    ) + # tell R to display data in boxplot form
   theme_cowplot() +  # use the theme "cowplot" for the plots, which is a nice minimalist theme
-  theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # adjust margins around the outside of the plot (top, right, bottom, left)
-        panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
-        axis.title.y = element_text(margin = margin(t = 0, 
-                                                    r = 10,
-                                                    b = 0,
-                                                    l = 0) # adjust space between y-axis numbers and y-axis label
-        ),
-        plot.caption = element_text(size = 10, hjust = 0)
-  ) + 
-  # facet_wrap( ~ Strategy, nrow = 3) +  # create a separate panel of estimates for each management strategy
-  scale_x_discrete(name = "Management strategies",
-                   breaks = strat.levels[2:length(strat.levels)],
-                   labels = strat.levels[2:length(strat.levels)]# Give the x-axis variables labels
-  ) + 
-  # scale_fill_manual(values = c("white", "gray80", "white"), # Assign colours to each type of estimate and don't show a legend
-  #                   guide = FALSE 
-  # ) + 
-  labs(x = "Management Strategies", 
-       y = "Cost-effectiveness Score"
-       # title = paste(grp.levels[i]),
-       # caption = paste0(
-         # "Figure ", i, ". Boxplots summarizing the distribution of the lower (L), best guess (B), and upper (Upper) expert estimates of the probability of persistence 
-         # of ", grp.levels[i], " under the Baseline scenario and each of the management strategies (S1 - S22). Lower and Upper estimates 
-         # have been standardized to 80% confidence level. The thick horizontal lines indicate the median estimate, while the surrounding box shows the 
-         # interquartile range. Any outliers are shown as points beyond the plot whiskers.Your individual estimates, standardized to 80% confidence level, 
-         # are shown in blue.")
-       ) +
-  ylim(0, 200) # set the y-axis limits from 0-100
+  theme(
+    axis.text = element_text(size = 10)
+    , axis.line = element_line(size = 1)
+    ) + 
+  scale_x_discrete(name = "Management strategies"
+                   , breaks = newstrat.levels[2:length(newstrat.levels)]
+                   , labels = newstrat.levels[2:length(newstrat.levels)]# Give the x-axis variables labels
+                   ) + 
+  labs(x = "Management strategies"
+       , y = "Cost-effectiveness score"
+       )
 
 print(temp.plot)
+
+ggsave(filename=paste0("Uncrtn_Benefit_", MC, "R_scores_constr.pdf", sep = ""), temp.plot, width = 180, height = 115, units = "mm")
+ggsave(filename=paste0("Uncrtn_Benefit_", MC, "R_scores_constr.tiff", sep = ""), temp.plot, width = 180, height = 115, units = "mm", dpi = 600)
+
+#' Histogram of CE ranks
+MC.CE_r <- gather(MC.Ranks, key = MC.Iter, value = CE_rank, 2:ncol(MC.Ranks))
+# MC.CE_r$Strategy <- as_factor(MC.CE_r$Strategy)
+
+count_ranks <- xyTable(MC.CE_r$Strategy, MC.CE_r$CE_rank)
+rank_table <- data.frame(levels(MC.CE_r$Strategy)[count_ranks$x], count_ranks$y, count_ranks$number)
+rank_table_sort <- as_tibble(rank_table)
+names(rank_table_sort) <- c("Strategy", "CE_rank", "Count")
+rank_table_sort <- group_by(rank_table_sort, Strategy) %>%
+  filter(Count == max(Count)) %>%
+  arrange(desc(CE_rank))
+
+strat.order <- rank_table_sort$Strategy
+new.names<-paste0(strat.order)
+
+temp.plot.r <-
+  ggplot(MC.CE_r, aes(y = factor(Strategy, levels = new.names)
+                      , x = CE_rank
+                      , fill = factor(Strategy, levels = new.names)
+                      )
+         ) +
+  geom_density_ridges(stat = "binline", bins = 23, scale = 0.9, draw_baseline = FALSE) +
+  theme_ridges(grid = TRUE, center_axis_labels = TRUE) +
+  theme(
+    legend.position = "none"
+    , panel.spacing = unit(0.1, "lines")
+    , strip.text = element_text(size = 8)
+    , axis.ticks = element_blank()
+    , axis.line = element_line(size = 0.3)
+    , panel.grid = element_line(size = 0.3)
+    ) +
+  labs(x = "Cost-effectiveness rank"
+       , y = "Management strategies"
+       ) +
+  scale_x_continuous(breaks = c(1:23)
+                     , labels = c(1:23) # Give the x-axis variables labels
+                     )
+
+print(temp.plot.r)
+
+ggsave(filename=paste0("Uncrtn_Benefit_", MC, "R_Ranks_constr.pdf", sep = ""), temp.plot.r, width = 180, height = 180, units = "mm")
+ggsave(filename=paste0("Uncrtn_Benefit_", MC, "R_Ranks_constr.tiff", sep = ""), temp.plot.r, width = 180, height = 180, units = "mm", dpi = 600)
+

@@ -18,25 +18,24 @@
 library(tidyverse)
 library(mc2d)
 library(cowplot)
+library(ggridges)
 
 #' Set parameters
 a <- 1000000 # scaling to get cost and benefits in same order of magnitude
-uncrtn.anal <- 0 # 1 if running cost uncertainty analysis, 0 if not.
-MC <-  10000 # number of iterations
+uncrtn.anal <- 1 # 1 if running cost uncertainty analysis, 0 if not (to save time)
+MC <-  10000 # number of iterations for uncertainty analysis
 u <- 0.3 # prop. variation from the best estimate
 
-#' Use result from *aggregateEstimates.R*
+#' Read in group-weighted benefit values from *aggregateEstimates.R* and cost/feasibility table
 #+ warning = FALSE, message = FALSE
-ben.mat.agg <- read_csv("Aggregated_Benefits_groupWtd_Newcombos.csv")
+ben.mat.agg <- read_csv("Aggregated_Benefits_groupWtd.csv")
 
-#' Read in Cost & Feasibility table
-#+ warning = FALSE, message = FALSE
-costfeas <- read_csv("CostFeas2_revised.csv")
+costfeas <- read_csv("CostFeas.csv")
 costfeas <- costfeas[-1,] # Remove baseline values
-costfeas$Strategy <- as.character(costfeas$Strategy)
 costfeas$Strategy <- as_factor(costfeas$Strategy)
 
-#' Calculate cost-effectiveness score: CE = (Ben*Feas)/Cost
+#' ## Calculate cost-effectiveness scores
+#' CE = (Benefit * Feasibility)/Cost
 # Get Best Guess estimates and transpose so that Strategies are in rows and Groups are in columns
 strat.ben <- data.frame(t(select(ben.mat.agg, contains("Best.guess"))))
 names(strat.ben) <- ben.mat.agg$Ecological.Group
@@ -48,38 +47,41 @@ strat.names[which(str_detect(rownames(strat.ben), "(?<=_)[:digit:]+")==1)] <-
 strat.names[which(str_detect(rownames(strat.ben), "(?<=_)[:digit:]+")==0)] <- 
   paste0("Baseline") # Rows without the "_" are Baseline estimates
 
-# Add up (unweighted) aggregated benefits of each strategy across ecological groups
+# Add up (group-weighted) aggregated benefits of each strategy across ecological groups
 sum.ben <- data.frame(strat.names, rowSums(strat.ben))
 names(sum.ben) <- c("Strategy", "Benefit")
 sum.ben$Strategy <- as_factor(as.character(sum.ben$Strategy))
 
-if (uncrtn.anal == 0) {
-  #' Join with cost/feasibility table and calculate cost-effectiveness
-  strat.est <- full_join(sum.ben, costfeas, by="Strategy") %>%
-    mutate(., Sc.Cost = Cost/a, # scale costs to get reasonable values
-           Exp.Benefit = Benefit * Feasibility, # weight benefits
-           CE = (Benefit * Feasibility)/Sc.Cost) # calculate cost-effectiveness scores
+# Join with cost/feasibility table and calculate cost-effectiveness
+strat.est <- full_join(sum.ben, costfeas, by="Strategy") %>%
+  mutate(., Sc.Cost = Cost/a, # scale costs to get reasonable values
+         Exp.Benefit = Benefit * Feasibility, # weight benefits by feasibility
+         CE = (Benefit * Feasibility)/Sc.Cost) # divide by scaled costs
   
-  #' Rank strategies by (weighted)Benefit, Cost, and CE score
-  CE_Score <- select(strat.est, c("Strategy", "Benefit", "Cost", "Feasibility", "Exp.Benefit","CE")) %>%
-    mutate(., CE_rank = rank(-CE), 
-           ExpBenefit_rank = rank(-Exp.Benefit), 
-           Cost_rank = rank(Cost))
-  print(CE_Score)
-  
-  #' Output results
-  write_csv(CE_Score, "Cost_Effectiveness_grpwtd2_revised.csv")
+# Rank strategies by Expected Benefit, Cost, and CE score and save results
+CE_Score <- select(strat.est, c("Strategy", "Benefit", "Cost", "Feasibility", "Exp.Benefit","CE")) %>%
+  mutate(., CE_rank = rank(-CE), 
+         ExpBenefit_rank = rank(-Exp.Benefit), 
+         Cost_rank = rank(Cost))
 
-} else {
+print(CE_Score)
   
-  #' Do uncertainty analysis
+write_csv(CE_Score, "Cost_Effectiveness.csv")
+
+#' ## Uncertainty analysis for cost uncertainty
+
+if (uncrtn.anal == 1) {
+  
   samples <- matrix(nrow = nrow(costfeas),ncol = MC)
   MC.CE_Score <- list()
+
   # get min and max
   min.Cost <- costfeas$Cost * (1-u)
   max.Cost <- costfeas$Cost * (1+u)
   best.Cost <- costfeas$Cost
+  
   for (it in 1:MC) {
+    
     rnd <- runif(1,1,999999)
     set.seed(rnd)
     # sample cost values
@@ -89,68 +91,112 @@ if (uncrtn.anal == 0) {
                           max = max.Cost, shape=4)
     costfeas$Cost <- samples[,it]
 
-    #' Join with cost/feasibility table and calculate cost-effectiveness
+    # Join with cost/feasibility table and calculate cost-effectiveness
     strat.est <- full_join(sum.ben, costfeas, by="Strategy") %>%
       mutate(., Sc.Cost = Cost/a, # scale costs to get reasonable values
              Exp.Benefit = Benefit * Feasibility, # weight benefits
              CE = (Benefit * Feasibility)/Sc.Cost) # calculate cost-effectiveness scores
 
-    #' Rank strategies by (weighted)Benefit, Cost, and CE score
+    # Rank strategies by (weighted)Benefit, Cost, and CE score
     CE_Score <- select(strat.est, c("Strategy", "Benefit", "Cost", "Feasibility", "Exp.Benefit","CE")) %>%
       mutate(., CE_rank = rank(-CE),
              ExpBenefit_rank = rank(-Exp.Benefit),
              Cost_rank = rank(Cost))
+    
     MC.CE_Score[[it]] <- CE_Score
-  }
+    
+    }
+  
+  # Get results and save as .csv files
   MC.CE_Table <- lapply(MC.CE_Score, "[", 1:length(strat.names), "CE")
   MC.Results <- matrix(unlist(MC.CE_Table), ncol = MC, byrow = FALSE)
   MC.Results <- data.frame(costfeas$Strategy, MC.Results)
   names(MC.Results)[1] <- "Strategy"
+  
+  MC.CE_Rank <- lapply(MC.CE_Score, "[", 1:length(strat.names), "CE_rank")
+  MC.Ranks <- matrix(unlist(MC.CE_Rank), ncol = MC, byrow = FALSE)
+  MC.Ranks <- data.frame(costfeas$Strategy, MC.Ranks)
+  names(MC.Ranks)[1] <- "Strategy"
 
-  #' Save results
-  write_csv(MC.Results, "MC_CEScores2_cost.csv")
+  write_csv(MC.Results, "MC_CEScores_cost.csv")
   MC_Samples <- data.frame(costfeas$Strategy, samples)
-  write_csv(MC_Samples, "MC_PerfSamples2_cost.csv")
+  write_csv(MC_Samples, "MC_PerfSamples_cost.csv")
 
-  #' Box plots for visualization
+  # Boxplot of CE scores
   MC.CE <- gather(MC.Results, key = MC.Iter, value = CE, 2:ncol(MC.Results))
   MC.CE$Strategy <- as_factor(MC.CE$Strategy)
 
   temp.plot <-
-    ggplot(MC.CE, aes(x = Strategy, # for each Ecological group, plot Estimate Type on x-axis
-                      y = CE # and St.Value on y-axis,
-    ) # and colour the boxplots by estimate type
-    ) +
-    geom_boxplot() + # tell R to display data in boxplot form
+    ggplot(MC.CE, aes(x = Strategy # for each Ecological group, plot Estimate Type on x-axis
+                      , y = CE # and St.Value on y-axis
+                      )
+           ) +
+    geom_boxplot(
+      lwd = 0.3 #lwd changes line width
+      , fatten = 1 # thickness of median line; default is 2
+      , outlier.size = 1 # size of outlier point
+      ) + # tell R to display data in boxplot form
     theme_cowplot() +  # use the theme "cowplot" for the plots, which is a nice minimalist theme
-    theme(plot.margin = unit(c(1.5, 1, 1.5, 1), "cm"), # adjust margins around the outside of the plot (top, right, bottom, left)
-          panel.spacing = unit(1, "lines"), # adjust margins and between panels of the plot (spacing of 1)
-          axis.title.y = element_text(margin = margin(t = 0,
-                                                      r = 10,
-                                                      b = 0,
-                                                      l = 0) # adjust space between y-axis numbers and y-axis label
-          ),
-          plot.caption = element_text(size = 10, hjust = 0)
-    ) +
-    # facet_wrap( ~ Strategy, nrow = 3) +  # create a separate panel of estimates for each management strategy
-    scale_x_discrete(name = "Management strategies",
-                     breaks = MC.CE$Strategy,
-                     labels = MC.CE$Strategy# Give the x-axis variables labels
-    ) +
-    # scale_fill_manual(values = c("white", "gray80", "white"), # Assign colours to each type of estimate and don't show a legend
-    #                   guide = FALSE
-    # ) +
-    labs(x = "Management Strategies",
-         y = "Cost-effectiveness score"
-         # title = paste(grp.levels[i]),
-         # caption = paste0(
-         # "Figure ", i, ". Boxplots summarizing the distribution of the lower (L), best guess (B), and upper (Upper) expert estimates of the probability of persistence
-         # of ", grp.levels[i], " under the Baseline scenario and each of the management strategies (S1 - S22). Lower and Upper estimates
-         # have been standardized to 80% confidence level. The thick horizontal lines indicate the median estimate, while the surrounding box shows the
-         # interquartile range. Any outliers are shown as points beyond the plot whiskers.Your individual estimates, standardized to 80% confidence level,
-         # are shown in blue.")
-    ) +
+    theme(
+      axis.text = element_text(size = 10)
+      , axis.line = element_line(size = 1)
+      ) +
+    scale_x_discrete(name = "Management strategies"
+                     , breaks = MC.CE$Strategy
+                     , labels = MC.CE$Strategy# Give the x-axis variables labels
+                     ) +
+    labs(x = "Management strategies"
+         , y = "Cost-effectiveness score"
+         ) +
     ylim(0, 200) # set the y-axis limits from 0-100
+  
+  ggsave(filename=paste0("Uncrtn_Cost_", MC, "R_Scores.pdf", sep = ""), temp.plot, width = 180, height = 115, units = "mm")
+  ggsave(filename=paste0("Uncrtn_Cost_", MC, "R_Scores.tiff", sep = ""), temp.plot, width = 180, height = 115, units = "mm", dpi = 600)
 
-}
+  
+  # Histogram of CE rank frequency
+  MC.CE_r <- gather(MC.Ranks, key = MC.Iter, value = CE_rank, 2:ncol(MC.Ranks))
+  MC.CE_r$Strategy <- as_factor(MC.CE_r$Strategy)
+  
+  count_ranks <- xyTable(MC.CE_r$Strategy, MC.CE_r$CE_rank)
+  rank_table <- data.frame(count_ranks$x, count_ranks$y, count_ranks$number)
+  rank_table_sort <- as_tibble(rank_table)
+  names(rank_table_sort) <- c("Strategy", "CE_rank", "Count")
+  rank_table_sort <- group_by(rank_table_sort, Strategy) %>%
+    filter(Count == max(Count)) %>%
+    arrange(desc(CE_rank))
+  
+  strat.order <- rank_table_sort$Strategy
+  new.names <- paste0("S", strat.order)
+  
+  temp.plot.r <-
+    ggplot(MC.CE_r, aes(y = factor(Strategy, levels = new.names)
+                        , x = CE_rank
+                        , fill = factor(Strategy, levels = new.names)
+                        )
+           ) +
+    geom_density_ridges(stat = "binline", bins = 23, scale = 0.9, draw_baseline = FALSE) +
+    theme_ridges(grid = TRUE, center_axis_labels = TRUE) +
+    theme(
+      legend.position = "none"
+      , panel.spacing = unit(0.1, "lines")
+      , strip.text = element_text(size = 8)
+      , axis.ticks = element_blank()
+      , axis.line = element_line(size = 0.3)
+      , panel.grid = element_line(size = 0.3)
+      ) +
+    labs(x = "Cost-effectiveness rank"
+         , y = "Management strategies"
+         ) +
+    scale_x_continuous(breaks = c(1:23)
+                       , labels = c(1:23) # Give the x-axis variables labels
+                       # , limits = c(0, max(rank_table$count_ranks.x)+1)
+                       )
+  
+  ggsave(filename=paste0("Uncrtn_Cost_", MC, "R_Ranks.pdf", sep = ""), temp.plot.r, width = 180, height = 180, units = "mm")
+  ggsave(filename=paste0("Uncrtn_Cost_", MC, "R_Ranks.tiff", sep = ""), temp.plot.r, width = 180, height = 180, units = "mm", dpi = 600)
+  
+  }
 
+print(temp.plot)
+print(temp.plot.r)

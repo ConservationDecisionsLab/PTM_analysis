@@ -5,12 +5,12 @@
 #' output: github_document
 #' ---
 
-#' This script standardizes the benefit estimates and saves results tables as .csv files: 
-#' 1) **Results_tidy.csv** - Tidy (long) version of the original **Results.csv** file
-#' 2) **Estimates_per_group.csv** - Number of expert estimates for each ecological group
-#' 3) **Estimates_by_strategy.csv** - Number of expert estimates there are for each strategy+group
-#' 4) **Standardized_Estimates_Wide.csv** - Standardized estimates in same table format as Results.csv
-#' 5) **Standardized_Estimates_Long.csv** - Tidy version of Standardized estimates - for use in plotting
+#' This script standardizes the benefit estimates and saves results tables as .csv files:  
+#' 1) **Results_tidy.csv** - Tidy (long) version of the original **Results.csv** file  
+#' 2) **Estimates_per_group.csv** - Number of expert estimates for each ecological group  
+#' 3) **Estimates_by_strategy.csv** - Number of expert estimates there are for each strategy x group  
+#' 4) **Standardized_Estimates_Wide.csv** - Standardized estimates in same table format as Results.csv  
+#' 5) **Standardized_Estimates_Long.csv** - Tidy version of Standardized estimates - for use in plotting  
 #' 
 #'
 #' It requires output from *combineTables.R*, which organizes the estimates into a
@@ -23,7 +23,7 @@ library(stringr)
 
 #' ## Read in and tidy data
 #+ warning = FALSE, message = FALSE
-results <- read.csv("Results_rev.csv")
+results <- read.csv("Results.csv")
 # head(results)
 
 #' Use tidyr package to transform data to tidy version, with single columns for Estimate (e.g., best guess, lower, upper) and Value (value of estimate, 0-100)
@@ -35,7 +35,7 @@ rlong <-
 head(rlong)
 
 rlong <- na.omit(rlong)
-write_csv(rlong, "Results_tidyrev.csv")
+write_csv(rlong, "Results_tidy.csv")
 
 rlong$Value <- as.numeric((rlong$Value))
 # str(rlong) # Check data type
@@ -46,7 +46,7 @@ rlong$Value <- as.numeric((rlong$Value))
 table.data <-spread(rlong, Estimate, Value) 
 table.subset <- table.data[, c(1, 2)] # Subset table.data to only include the columns "Expert" and "Ecological.Group"
 exp.table <- table(table.subset$Ecological.Group)
-write.csv(exp.table, "Estimates_per_group_rev.csv", row.names=FALSE)
+write.csv(exp.table, "Estimates_per_group.csv", row.names=FALSE)
 exp.table
 
 #' Create new columns to specify Estimate Type and Strategy separately
@@ -69,7 +69,7 @@ table.subset2 <- subset(rlong, Est.Type=="Best.Guess") # Subset to count how man
 strat.levels <- unique(table.subset2$Strategy)
 table.subset2$Strategy <- factor(table.subset2$Strategy,levels = strat.levels) #' <!-- AC: Note that using as.factor() changes the order to alphabetical -->
 st.table <- table(table.subset2$Ecological.Group, table.subset2$Strategy)
-write.csv(st.table, "Estimates_by_strategy_rev.csv")
+write.csv(st.table, "Estimates_by_strategy.csv")
 st.table
 
 
@@ -130,5 +130,5 @@ rlong.wide$Ecological.Group<-factor(rlong.wide$Ecological.Group, levels=grp.leve
 rlong.wide <- with(rlong.wide, rlong.wide[order(Expert, Ecological.Group),]) 
 
 # Output results
-write_csv(rlong.wide, "Standardized_Estimates_Widerev.csv") 
-write_csv(rlong.std, "Standardized_Estimates_Longrev.csv")
+write_csv(rlong.wide, "Standardized_Estimates_Wide.csv") 
+write_csv(rlong.std, "Standardized_Estimates_Long.csv")

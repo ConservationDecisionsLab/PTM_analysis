@@ -6,12 +6,11 @@
 #' ---
 #' 
 #' Creates pointrange plots of the standardized mean estimates of probability of persistence (y-axis) 
-#' for each strategy (x-axis) and for each ecological group (subplots).
+#' for each strategy (x-axis) and for each ecological group (subplots).  
 #' 
 #' It can be used to plot mean estimates that are either unweighted (**Aggregated_Performance.csv** from *aggregateEstimates.r*)
-#' or weighted by feasibility (**Aggregated_Performance_weighted.csv** from *getBenefitMatrix.r*)
-#' 
-
+#' or weighted by feasibility (**Expected_Performance.csv** from *getBenefitMatrix.r*)
+#'   
 #' Load packages
 #+ warning = FALSE, message = FALSE
 library(tidyverse)
@@ -24,10 +23,10 @@ library(gridExtra)
 weighted <- 1
 
 if (weighted == 0) {
-  est.file <- "Aggregated_Performance_rev"
+  est.file <- "Aggregated_Performance"
 } else {
   if (weighted == 1) {
-    est.file <- "Aggregated_Performance_weighted"
+    est.file <- "Expected_Performance"
   } else {
     stop("Must specify if estimates are weighted (1) or not (0)")
   }
@@ -50,12 +49,20 @@ plot.data <- select(exp.pop.long, -Estimate) %>%
 
 strat.levels <- levels(plot.data$Strategy)
 
-write_csv(plot.data, paste0(est.file, "_tidyrev.csv", sep = ""))
+write_csv(plot.data, paste0(est.file, "_tidy.csv", sep = ""))
 
 base.data <- plot.data[which(plot.data$Strategy=="Baseline"),]
 plot.data.nobase <- plot.data[which(plot.data$Strategy!="Baseline"),]
-  
 
+# Renaming for plot readability
+plot.data.nobase$Ecological.Group<-as.character(plot.data.nobase$Ecological.Group)
+plot.data.nobase$Ecological.Group[which(str_detect(plot.data.nobase$Ecological.Group, "Forest Openings and Young Forest Species")==1)] <- "Forest Openings or Young Forest Spp"
+plot.data.nobase$Ecological.Group<-as_factor(plot.data.nobase$Ecological.Group)
+
+base.data$Ecological.Group<-as.character(base.data$Ecological.Group)
+base.data$Ecological.Group[which(str_detect(base.data$Ecological.Group, "Forest Openings and Young Forest Species")==1)] <- "Forest Openings or Young Forest Spp"
+base.data$Ecological.Group<-as_factor(base.data$Ecological.Group)
+  
 #' Plot mean estimates by strategy for all groups
 temp.plot2 <- 
   ggplot(plot.data.nobase, aes(x = Strategy, y = Wt.Best.guess) ) +
@@ -73,8 +80,8 @@ temp.plot2 <-
   facet_wrap( ~ Ecological.Group, nrow = 3, ncol = 3) +  # create a separate panel for each ecological group
   scale_x_discrete(breaks = strat.levels, labels = c("B", 1:23) ) +
   labs(x = "Strategies",
-       y = "Probability of persistence (%)",
-       title = "Mean estimates, standardized to 80% confidence level" 
+       y = "Probability of persistence (%)"
+       # , title = "Mean estimates, standardized to 80% confidence level" 
        #caption = "Figure 1. Estimated probability of persistence of each ecological group under the Baseline scenario (B) and each of the management strategies (1 - 22). 
        #Values are based on expert best guess and lower and upper estimates (standardized to 80% confidence level), averaged over number of experts who 
        #provided estimates for the strategy and ecological group."

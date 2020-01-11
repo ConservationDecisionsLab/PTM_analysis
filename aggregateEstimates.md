@@ -19,13 +19,15 @@ library(tidyverse)
 Specify how estimates should be aggregated
 
 ``` r
-wt.by.numspp <- 1 # (1) if weighting each expert estimate based on the number of species in each group that they scored, (0) if assuming all species in the group were considered in the estimate
+# (1) if weighting each expert estimate based on the number of species in each group that they scored,  
+# (0) if assuming all species in the group were considered in the estimate
+wt.by.numspp <- 1 
 ```
 
 Read in and prepare data
 
 ``` r
-rlong.wide <- read_csv("Standardized_Estimates_Widerev.csv")
+rlong.wide <- read_csv("Standardized_Estimates_Wide.csv")
 rlong.wide$Expert <- as_factor(rlong.wide$Expert)
 rlong.wide$Ecological.Group <- as_factor(rlong.wide$Ecological.Group)
 
@@ -99,7 +101,7 @@ if (wt.by.numspp == 1) {
   ben.mat.agg <- ben.mat.agg %>%
     spread(., Estimate, Wt.Avg)
   
-  # Do the same for the baseline estimates table
+  # Aggregate the baseline estimates
   base.mat <- base.mat %>%
     add_column(Strategy = rep("Baseline", nrow(base.mat)), .before = "Best.guess")
   base.mat$Strategy <- factor(base.mat$Strategy, levels = strat.levels)
@@ -144,7 +146,7 @@ exp.pop <- cbind(base.mat.agg, exp.pop)
 # print(exp.pop)
 ```
 
-Weight benefits by number of species in group (multiply)
+Weight benefits by number of species in group (multiply) for calculating CE scores
 
 ``` r
 grpwtd_ben <- ben.mat.agg[,2:ncol(ben.mat.agg)]*numspp
@@ -155,8 +157,8 @@ names(grpwtd_ben)[1] <- "Ecological.Group"
 Output results
 
 ``` r
-write_csv(ben.mat.agg, "Aggregated_Benefits_rev.csv")
-write_csv(base.mat.agg, "Aggregated_Baseline_rev.csv")
-write_csv(exp.pop, "Aggregated_Performance_rev.csv")
+write_csv(ben.mat.agg, "Aggregated_Benefits.csv")
+write_csv(base.mat.agg, "Aggregated_Baseline.csv")
+write_csv(exp.pop, "Aggregated_Performance.csv")
 write_csv(grpwtd_ben, "Aggregated_Benefits_groupWtd.csv")
 ```

@@ -77,8 +77,9 @@ for (i in 1:length(bestguess)) {
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest Species")==1)] <- "Mature Forest and Peatland Species"
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/ Peatland Species")==1)] <- "Mature Forest and Peatland Species"
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Mature Forest/Peatland Species")==1)] <- "Mature Forest and Peatland Species"
-byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grassland/Open Habitat species")==1)] <- "Grassland or Open Habitat Species"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grassland/Open Habitat species")==1)] <- "Grassland, Open, or Agricult Assoc"
+byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Grassland or Open Habitat Species")==1)] <- "Grassland, Open, or Agricult Assoc"
 byexpert$`Ecological Group`[which(str_detect(byexpert$`Ecological Group`, "Forest Openings and Young Forest")==1)] <- "Forest Openings and Young Forest Species"
 
 #' Output results
-write_csv(byexpert, "Results_rev.csv")
+write_csv(byexpert, "Results.csv")
