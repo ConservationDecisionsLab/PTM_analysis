@@ -1,4 +1,4 @@
-# SJRPTM_ExpertElicitation
+# PTM_analysis
 
 Collection of R scripts for standardizing and aggregating expert estimates and calculating cost-effectiveness
 
@@ -21,9 +21,6 @@ Collection of R scripts for standardizing and aggregating expert estimates and c
   + calculate benefit of each strategy, _Benefit = Strategy performance - Baseline performance_, and average the benefit across experts (Aggregated_Benefits.csv)
   + calculate the average performance (probability of persistence) under each strategy = _Aggregated_Benefits + Aggregated_Baseline_ (Aggregated_Performance.csv)
   
-### getNewCombos.R
-* derives new 'All Strategies' S22 estimates from aggregated estimates (applicable to SJR PTM project only)
-
 ### getBenefitMatrix.R
 * uses Aggregated_Baseline.csv and Aggregated_Benefits.csv, and a table of strategy Cost and Feasibility to
   + calculate the expected benefit of each strategy for each ecological group = _Benefit * Feasibility_ (Aggregated_Benefits_weighted.csv)
@@ -40,4 +37,3 @@ _CE = (Benefit*Feasibility)/Cost_ and rank strategies by Benefit, Cost, and CE. 
  
 ### Sens_Analysis.R
 * conducts uncertainty analysis for benefit estimates
-* includes script for deriving new 'All Strategies' S22 estimates for each individual expert, for use in sampling - applicable for SJR PTM project only
