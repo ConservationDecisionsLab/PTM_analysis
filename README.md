@@ -20,6 +20,9 @@ Collection of R scripts for standardizing and aggregating expert estimates and c
   + calculate the average performance (probability of persistence) under the Baseline scenario (Aggregated_Baseline.csv)
   + calculate benefit of each strategy, _Benefit = Strategy performance - Baseline performance_, and average the benefit across experts (Aggregated_Benefits.csv)
   + calculate the average performance (probability of persistence) under each strategy = _Aggregated_Benefits + Aggregated_Baseline_ (Aggregated_Performance.csv)
+  
+### getNewCombos.R
+* derives new 'All Strategies' S22 estimates from aggregated estimates (applicable to SJR PTM project only)
 
 ### getBenefitMatrix.R
 * uses Aggregated_Baseline.csv and Aggregated_Benefits.csv, and a table of strategy Cost and Feasibility to
@@ -35,3 +38,6 @@ Collection of R scripts for standardizing and aggregating expert estimates and c
 * uses Aggregated_Benefits.csv and a table of strategy Cost and Feasibility to calculate a cost-effectiveness (CE) score  
 _CE = (Benefit*Feasibility)/Cost_ and rank strategies by Benefit, Cost, and CE. Results are saved as Cost_Effectiveness.csv
  
+### Sens_Analysis.R
+* conducts uncertainty analysis for benefit estimates
+* includes script for deriving new 'All Strategies' S22 estimates for each individual expert, for use in sampling - applicable for SJR PTM project only
