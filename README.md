@@ -1,6 +1,6 @@
 # PTM_analysis
 
-Collection of R scripts for standardizing and aggregating expert estimates and calculating cost-effectiveness
+Collection of R scripts for standardizing and aggregating expert estimates and calculating cost-effectiveness. Includes anonymized raw Benefits tables and cost/feasibility summary table from Saint John River (SJR) PTM for testing purposes - please do not circulate or publish.  
 
 ### combineTables.R 
 * reads individual expert estimate tables and combines them into single Results.csv file
