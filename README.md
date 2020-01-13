@@ -1,6 +1,6 @@
 # PTM_analysis
 
-Collection of R scripts for standardizing and aggregating expert estimates and calculating cost-effectiveness. Includes anonymized raw Benefits tables and cost/feasibility summary table from Saint John River (SJR) PTM for testing purposes - please do not circulate or publish.  
+Collection of R scripts for standardizing and aggregating expert estimates and calculating cost-effectiveness. Includes sample Benefits worksheet table with the same structure as the raw Benefit scoring tables used in expert elicitation (contact abbey.camaclang@gmail.com for copies of actual benefits tables for code testing). Also included are: the cost/feasibility summary table; the list of species in each ecological grouping; and the list of special cases (where experts have provided benefit scores for only some of the species in an ecological group) from the Saint John River (SJR) PTM. Data tables provided for testing purposes only - please do not circulate or publish.  
 
 ### combineTables.R 
 * reads individual expert estimate tables and combines them into single Results.csv file
