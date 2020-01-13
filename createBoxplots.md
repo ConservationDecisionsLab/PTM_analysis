@@ -100,7 +100,7 @@ for (j in seq_along(expcode)) {
   
   # To save all plots as a single .pdf: 
   plot1 <- marrangeGrob(grp.list, nrow = 1, ncol = 1, top = NULL) # arranges plots for saving to single pdf file, one plot per page
-  ggsave(filename = paste0("Exp", expcode[j], "_rev.pdf", sep=''), 
+  ggsave(filename = paste0("Exp", expcode[j], ".pdf", sep=''), 
          plot1, 
          path = "./boxplots/", 
          width = 11, height = 8.5, units = "in")
@@ -176,7 +176,7 @@ for (j in seq_along(expcode)) {
   plot2 <- marrangeGrob(grp.list, nrow = 1, ncol = 1, top = NULL) # arranges plots for saving to single pdf file, one plot per page
   ggsave(
     # filename = "IndivEstimates.pdf", # if plotting all estimates without highlighting
-    filename = paste0("Indiv_Exp", expcode[j], "_rev.pdf", sep=''), # if higlighting individual expert estimates
+    filename = paste0("Indiv_Exp", expcode[j], ".pdf", sep=''), # if higlighting individual expert estimates
     plot2, 
     path = "./pointrange/", 
     width = 11, height = 8.5, units = "in"

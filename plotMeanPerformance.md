@@ -53,7 +53,7 @@ write_csv(plot.data, paste0(est.file, "_tidy.csv", sep = ""))
 base.data <- plot.data[which(plot.data$Strategy=="Baseline"),]
 plot.data.nobase <- plot.data[which(plot.data$Strategy!="Baseline"),]
 
-# Renaming for plot readability
+# Renaming to improve readability of subplot labels
 plot.data.nobase$Ecological.Group<-as.character(plot.data.nobase$Ecological.Group)
 plot.data.nobase$Ecological.Group[which(str_detect(plot.data.nobase$Ecological.Group, "Forest Openings and Young Forest Species")==1)] <- "Forest Openings or Young Forest Spp"
 plot.data.nobase$Ecological.Group<-as_factor(plot.data.nobase$Ecological.Group)
@@ -80,7 +80,7 @@ temp.plot2 <-
         plot.caption = element_text(size = 10, hjust = 0)
   ) +
   facet_wrap( ~ Ecological.Group, nrow = 3, ncol = 3) +  # create a separate panel for each ecological group
-  scale_x_discrete(breaks = strat.levels, labels = c("B", 1:23) ) +
+  scale_x_discrete(breaks = strat.levels, labels = c("B", 2:length(strat.levels)) ) +
   labs(x = "Strategies",
        y = "Probability of persistence (%)"
        # , title = "Mean estimates, standardized to 80% confidence level" 

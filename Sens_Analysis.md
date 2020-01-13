@@ -69,81 +69,6 @@ spcases$`Ecological Group`<- factor(spcases$`Ecological Group`, levels = grp.lev
 names(spcases)[which(str_detect(names(spcases), "Ecological Group") == 1)] <- "Ecological.Group"  
 ```
 
-Derive new S22 estimates
-------------------------
-
-For SJR PTM only
-
-Rename S22 as S23 and calculate new S22
-
-``` r
-temp.table <- filter(rlong.std.wide, Strategy %in% c("S5", "S6", "S22")) %>%
-  gather(`Lower`, `Best.Guess`, `Upper`, key = Type, value = Estimate) %>%
-  spread(key = Strategy, value = Estimate) %>%
-  rename(S23 = S22) %>%
-  mutate(Diff = S6 - S5, S22 = S23 - Diff) 
- 
-S23.table <- select(temp.table, Expert, Ecological.Group, Type, S23) %>%
-  spread(key = Type, value = S23) %>%
-  mutate(Strategy = "S23") %>%
-  select(Expert, Ecological.Group, Strategy, Lower, Best.Guess, Upper)
-S23.table$Strategy <- factor(S23.table$Strategy, levels = newstrat.levels)
-
-new.S22 <- select(temp.table, Expert, Ecological.Group, Type, S22) %>%
-  spread(key = Type, value = S22) %>%
-  mutate(Strategy = "S22") %>%
-  select(Expert, Ecological.Group, Strategy, Lower, Best.Guess, Upper) %>%
-  gather(`Lower`, `Best.Guess`, `Upper`, key = Type, value = Estimate)
-```
-
-Ensure that new S22 estimates are &gt; or = to the max estimates of component strategies (i.e., S1 - S5 and S7 - S21)
-
-``` r
-# Get max estimates of component strategies (i.e., S1-S5 and S7 - S21)
-compstrat <- filter(rlong.std.wide, !Strategy %in% c("S6", "S22"))
-grouped <- group_by(compstrat, Expert, Ecological.Group) %>%
-  filter(Best.Guess == max(Best.Guess)) %>%
-  filter(Lower == max(Lower)) %>%
-  filter(Upper == max(Upper)) %>%
-  slice(which.max(Best.Guess)) %>%
-  gather(`Lower`, `Best.Guess`, `Upper`, key = Type, value = Estimate)
-
-# Compare max estimates to new S22 estimates and use the higher value
-joined <- full_join(grouped, new.S22, by = c("Expert", "Ecological.Group", "Type")) %>%
-  rename(S22 = Estimate.y, Other = Estimate.x) %>%
-  select(Expert, Ecological.Group, Type, Other, S22) %>%  # remove unnecessary columns
-  gather(Other, S22, key = Strategy, value = Estimate) %>%
-  arrange(Expert, Ecological.Group) %>% # re-order rows
-  spread(key = Type, value = Estimate) %>%
-  filter(Best.Guess == max(Best.Guess)) %>% # get the maximum of the values for each expert * ecological group
-  gather(Best.Guess, Lower, Upper, key = Type, value = Estimate) %>%
-  spread(key = Strategy, value = Estimate)
-
-joined$S22[which(is.na(joined$S22))] <- joined$Other[which(is.na(joined$S22))]
-
-# Extract updated S22 values
-S22.table <- select(joined, -Other) %>%
-  spread(key = Type, value = S22) %>%
-  mutate(Strategy = "S22") %>%
-  select(Expert, Ecological.Group, Strategy, Lower, Best.Guess, Upper) #need to change Strategy into factor
-S22.table$Strategy <- factor(S22.table$Strategy, levels = newstrat.levels)
-
-# Constrain new estimates to 0-100 range
-S22.table$Lower[which(S22.table$Lower < 0)] <- 0
-S22.table$Upper[which(S22.table$Upper > 100)] <- 100
-```
-
-Update table with new estimates
-
-``` r
-rlong.std.wide.orig <- rlong.std.wide # store original version first, just in case
-
-rlong.std.wide$Strategy<-factor(rlong.std.wide$Strategy, levels = newstrat.levels)
-rlong.std.wide <- filter(rlong.std.wide, Strategy != "S22") # remove old S22 estimates from table
-rlong.std.wide <- bind_rows(rlong.std.wide, S22.table, S23.table) %>% # add new S22 estimates and S23 estimates
-  arrange(Expert, Ecological.Group, Strategy)  
-```
-
 Uncertainty analysis for benefit uncertainty
 --------------------------------------------
 
@@ -198,32 +123,6 @@ for(it in 1:MC){
   # Weight benefits by number of species in group
   wt.temp.agg <- left_join(temp.agg, grpwts, by = "Ecological.Group") %>%
     mutate(Wt.Benefit = x*numspp)    
-  
-  # ----------------------------------------------------------------------------------------------------------------
-  # Calculate benefit values of new combinations for Migratory Fish only (for SJR PTM only!)
-  # 
-  # S6.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S6"]
-  # S5.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S5"]
-  # SAll.fishben <- wt.temp.agg$Wt.Benefit[wt.temp.agg$Ecological.Group == "Migratory Fish" & wt.temp.agg$Strategy== "S22"]
-  # 
-  # S6.wt.fishben <- S6.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S6")]
-  # S5.wt.fishben <- S5.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S5")]
-  # SAll.wt.fishben <- SAll.fishben * costfeas$Feasibility[which(costfeas$Strategy == "S22")]
-  # 
-  # S22.wtben <- SAll.wt.fishben - (S6.wt.fishben - S5.wt.fishben)
-  # S22.ben <- S22.wtben/costfeas$Feasibility[which(costfeas$Strategy == "S22")] # unweight
-  # 
-  # # Copy old S22 values as S23:
-  # S23 <- wt.temp.agg[which(wt.temp.agg$Strategy == "S22"),]
-  # S23$Strategy <- "S23"
-  # rownames(S23) <- c(199:(199+8))
-  # 
-  # # Replace old S22 migratory fish values with new ones, then add new S23 values
-  # wt.temp.agg$Wt.Benefit[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")] <- S22.ben
-  # fish.numspp <- wt.temp.agg$numspp[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")]
-  # wt.temp.agg$x[which(wt.temp.agg$Strategy=="S22" & wt.temp.agg$Ecological.Group=="Migratory Fish")] <- S22.ben/fish.numspp
-  # wt.temp.agg <- rbind(wt.temp.agg, S23) # new values (unweighted by feasibility) one for each ecol group and strategy. Use for getting new benefit matri
-  # ------------------------------------end section-------------------------------------------------------------------
   
   # Calculate total benefit of each strategy across ecological groups
   # First rearrange so strategies are in rows and ecol groups are in columns - basically need to end up with col vector of total benefit
@@ -336,7 +235,7 @@ temp.plot <-
 print(temp.plot)
 ```
 
-![](Sens_Analysis_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](Sens_Analysis_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 ``` r
 ggsave(filename=paste0("Uncrtn_Benefit_", MC, "R_scores_constr.pdf", sep = ""), temp.plot, width = 180, height = 115, units = "mm")
@@ -353,20 +252,23 @@ count_ranks <- xyTable(MC.CE_r$Strategy, MC.CE_r$CE_rank)
 rank_table <- data.frame(levels(MC.CE_r$Strategy)[count_ranks$x], count_ranks$y, count_ranks$number)
 rank_table_sort <- as_tibble(rank_table)
 names(rank_table_sort) <- c("Strategy", "CE_rank", "Count")
-rank_table_sort <- group_by(rank_table_sort, Strategy) %>%
+rank_table_sort <- group_by(rank_table_sort, Strategy) %>% # version used in SJR PTM; for each Strategy, finds the most frequent CE_rank
   filter(Count == max(Count)) %>%
   arrange(desc(CE_rank))
+# rank_table_sort <- group_by(rank_table_sort, CE_rank) %>% # for each CE_rank, finds the most frequent Strategy
+#   filter(Count == max(Count)) %>%
+#   arrange(desc(CE_rank), Count)
 
 strat.order <- rank_table_sort$Strategy
 new.names<-paste0(strat.order)
 
-temp.plot.r <-
+temp.plot.r <- # NOTE plotting error occurs if a Strategy is duplicated, hence the different ways of sorting above
   ggplot(MC.CE_r, aes(y = factor(Strategy, levels = new.names)
                       , x = CE_rank
                       , fill = factor(Strategy, levels = new.names)
                       )
          ) +
-  geom_density_ridges(stat = "binline", bins = 23, scale = 0.9, draw_baseline = FALSE) +
+  geom_density_ridges(stat = "binline", bins = length(new.names), scale = 0.9, draw_baseline = FALSE) +
   theme_ridges(grid = TRUE, center_axis_labels = TRUE) +
   theme(
     legend.position = "none"
@@ -379,14 +281,14 @@ temp.plot.r <-
   labs(x = "Cost-effectiveness rank"
        , y = "Management strategies"
        ) +
-  scale_x_continuous(breaks = c(1:23)
-                     , labels = c(1:23) # Give the x-axis variables labels
+  scale_x_continuous(breaks = c(1:length(new.names))
+                     , labels = c(1:length(new.names)) # Give the x-axis variables labels
                      )
 
 print(temp.plot.r)
 ```
 
-![](Sens_Analysis_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](Sens_Analysis_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 ``` r
 ggsave(filename=paste0("Uncrtn_Benefit_", MC, "R_Ranks_constr.pdf", sep = ""), temp.plot.r, width = 180, height = 180, units = "mm")

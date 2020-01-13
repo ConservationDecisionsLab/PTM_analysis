@@ -155,6 +155,7 @@ if (uncrtn.anal == 1) {
 
   
   # Histogram of CE rank frequency
+  # need to generalize number of bins/strategies
   MC.CE_r <- gather(MC.Ranks, key = MC.Iter, value = CE_rank, 2:ncol(MC.Ranks))
   MC.CE_r$Strategy <- as_factor(MC.CE_r$Strategy)
   
@@ -162,9 +163,12 @@ if (uncrtn.anal == 1) {
   rank_table <- data.frame(count_ranks$x, count_ranks$y, count_ranks$number)
   rank_table_sort <- as_tibble(rank_table)
   names(rank_table_sort) <- c("Strategy", "CE_rank", "Count")
-  rank_table_sort <- group_by(rank_table_sort, Strategy) %>%
+  # rank_table_sort <- group_by(rank_table_sort, Strategy) %>% # version used in SJR PTM; for each Strategy, finds the most frequent CE_rank
+    # filter(Count == max(Count)) %>%
+    # arrange(desc(CE_rank), Count)
+  rank_table_sort <- group_by(rank_table_sort, CE_rank) %>% # for each CE_rank, finds the most frequent Strategy
     filter(Count == max(Count)) %>%
-    arrange(desc(CE_rank))
+    arrange(desc(CE_rank), Count)
   
   strat.order <- rank_table_sort$Strategy
   new.names <- paste0("S", strat.order)
@@ -175,7 +179,7 @@ if (uncrtn.anal == 1) {
                         , fill = factor(Strategy, levels = new.names)
                         )
            ) +
-    geom_density_ridges(stat = "binline", bins = 23, scale = 0.9, draw_baseline = FALSE) +
+    geom_density_ridges(stat = "binline", bins = length(new.names), scale = 0.9, draw_baseline = FALSE) +
     theme_ridges(grid = TRUE, center_axis_labels = TRUE) +
     theme(
       legend.position = "none"
@@ -188,8 +192,8 @@ if (uncrtn.anal == 1) {
     labs(x = "Cost-effectiveness rank"
          , y = "Management strategies"
          ) +
-    scale_x_continuous(breaks = c(1:23)
-                       , labels = c(1:23) # Give the x-axis variables labels
+    scale_x_continuous(breaks = c(1:length(new.names))
+                       , labels = c(1:length(new.names)) # Give the x-axis variables labels
                        # , limits = c(0, max(rank_table$count_ranks.x)+1)
                        )
   
